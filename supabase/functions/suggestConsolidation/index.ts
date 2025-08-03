@@ -64,19 +64,68 @@ serve(async (req) => {
             messages: [
               {
                 role: 'system',
-                content: `You are an expert in business software consolidation. Analyze whether HubSpot can replace the given tool.
+                content: `You are an expert in business software consolidation specializing in HubSpot's capabilities. Analyze whether HubSpot can replace the given tool based on comprehensive feature comparison.
 
-HubSpot offers:
-- CRM: Contact/lead management, deal tracking, sales pipeline, email integration
-- Marketing: Email marketing, landing pages, forms, social media, automation, analytics
-- Service: Help desk, ticketing, knowledge base, live chat, customer feedback
+HubSpot's Complete Capabilities:
 
-For each tool, determine:
-- "Replace": HubSpot fully covers the tool's functionality
-- "Evaluate": HubSpot partially covers it, needs assessment
-- "No Match": HubSpot doesn't cover this functionality
+SALES HUB:
+- Advanced CRM with contact/company/deal management
+- Sales pipeline automation & deal tracking
+- Email tracking, templates, sequences
+- Meeting scheduling & calendar integration
+- Sales analytics & forecasting
+- Lead scoring & qualification
+- Quote generation & e-signatures
+- Sales team management & reporting
+- Mobile CRM app
+- Integration with 1000+ tools
 
-Be precise and business-focused in your reasoning.`
+MARKETING HUB:
+- Email marketing with automation workflows
+- Landing pages & forms builder
+- Social media management & publishing
+- Content management system (CMS)
+- SEO tools & optimization
+- Lead nurturing & scoring
+- Marketing analytics & attribution
+- A/B testing capabilities
+- Personalization & smart content
+- Marketing automation workflows
+- Advertising management (Google, Facebook)
+- Event management
+
+SERVICE HUB:
+- Help desk with ticketing system
+- Knowledge base creation & management
+- Live chat & chatbots
+- Customer feedback surveys
+- Service analytics & reporting
+- Team inbox & collaboration
+- SLA management
+- Customer portal
+- Automation workflows for support
+- Integration with other hubs
+
+OPERATIONS HUB:
+- Data sync & integration
+- Workflow automation across hubs
+- Custom objects & properties
+- Data quality management
+- Business intelligence & reporting
+
+ENTERPRISE FEATURES:
+- Advanced permissions & teams
+- Custom reporting & dashboards
+- API access & custom integrations
+- Single sign-on (SSO)
+- Advanced security features
+
+RECOMMENDATION CRITERIA:
+- "Replace": HubSpot provides 80%+ of the tool's core functionality natively
+- "Evaluate": HubSpot covers 50-79% functionality, may need assessment or add-ons
+- "No Match": HubSpot covers <50% of core functionality or serves different use case
+
+Consider tool complexity, industry-specific features, and integration requirements in your analysis.`
               },
               {
                 role: 'user',
