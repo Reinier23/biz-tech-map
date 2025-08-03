@@ -51,7 +51,7 @@ const AddTools = () => {
   const [activeTab, setActiveTab] = useState('Marketing');
   const navigate = useNavigate();
 
-  // Load tools from context on mount
+  // Load tools from context on mount only
   useEffect(() => {
     if (contextTools.length > 0) {
       const categorized = categories.reduce((acc, cat) => {
@@ -71,16 +71,22 @@ const AddTools = () => {
       }, {} as Record<string, Tool[]>);
       setToolsByCategory(categorized);
     }
-  }, [contextTools]);
+  }, []); // Only run on mount
 
-  // Save to context when tools change
+  // Save to context when tools change, but avoid infinite loops
   useEffect(() => {
     const allTools = Object.values(toolsByCategory).flat();
     const validTools = allTools.filter(tool => tool.name.trim() && tool.category);
-    if (validTools.length > 0) {
+    
+    // Only update context if tools actually changed
+    const currentValidTools = contextTools.filter(tool => tool.name.trim() && tool.category);
+    const toolsChanged = validTools.length !== currentValidTools.length || 
+      validTools.some(tool => !currentValidTools.find(ct => ct.id === tool.id && ct.name === tool.name));
+    
+    if (toolsChanged && validTools.length > 0) {
       setContextTools(validTools);
     }
-  }, [toolsByCategory, setContextTools]);
+  }, [toolsByCategory]);
 
   const addTool = (category: string) => {
     const newTool: Tool = {
