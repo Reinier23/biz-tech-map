@@ -1,10 +1,11 @@
+
 import React, { useState, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Loader2, Sparkles, Edit3, X } from 'lucide-react';
+import { Loader2, Sparkles, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Tool {
@@ -35,7 +36,6 @@ export const SmartToolInput: React.FC<SmartToolInputProps> = ({
   onRemove
 }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isManualMode, setIsManualMode] = useState(false);
   const [enrichedData, setEnrichedData] = useState<EnrichedData | null>(null);
 
   const enrichToolData = useCallback(async (toolName: string) => {
@@ -62,7 +62,6 @@ export const SmartToolInput: React.FC<SmartToolInputProps> = ({
       }
     } catch (error) {
       console.error('Error enriching tool data:', error);
-      setIsManualMode(true);
     } finally {
       setIsLoading(false);
     }
@@ -72,22 +71,14 @@ export const SmartToolInput: React.FC<SmartToolInputProps> = ({
     onUpdate(tool.id, 'name', value);
     
     // Debounce the API call
-    if (value.trim() && !isManualMode) {
+    if (value.trim()) {
       const timeoutId = setTimeout(() => {
         enrichToolData(value);
       }, 1000);
       
       return () => clearTimeout(timeoutId);
     }
-  }, [enrichToolData, isManualMode, onUpdate, tool.id]);
-
-  const toggleManualMode = () => {
-    setIsManualMode(!isManualMode);
-    if (isManualMode) {
-      // Reset to smart mode
-      setEnrichedData(null);
-    }
-  };
+  }, [enrichToolData, onUpdate, tool.id]);
 
   return (
     <Card className="p-6 space-y-4 relative">
@@ -101,28 +92,15 @@ export const SmartToolInput: React.FC<SmartToolInputProps> = ({
       </Button>
 
       <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          {!isManualMode && (
-            <Badge variant="outline" className="gap-1">
-              <Sparkles className="h-3 w-3" />
-              AI-Powered
-            </Badge>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleManualMode}
-            className="text-xs"
-          >
-            <Edit3 className="h-3 w-3 mr-1" />
-            {isManualMode ? 'Use AI' : 'Manual'}
-          </Button>
-        </div>
+        <Badge variant="outline" className="gap-1 w-fit">
+          <Sparkles className="h-3 w-3" />
+          AI-Powered
+        </Badge>
 
         <div className="space-y-3">
           <div>
             <label className="text-sm font-medium text-foreground mb-2 block">
-              Tool Name {!isManualMode && <span className="text-muted-foreground">(we'll handle the rest!)</span>}
+              Tool Name <span className="text-muted-foreground">(we'll handle the rest!)</span>
             </label>
             <Input
               value={tool.name}
@@ -143,7 +121,7 @@ export const SmartToolInput: React.FC<SmartToolInputProps> = ({
             </div>
           )}
 
-          {!isLoading && (tool.category || tool.description || isManualMode) && (
+          {!isLoading && (tool.category || tool.description) && (
             <div className="grid gap-3">
               {tool.logoUrl && (
                 <div className="flex items-center gap-2">
@@ -168,28 +146,9 @@ export const SmartToolInput: React.FC<SmartToolInputProps> = ({
                   <label className="text-sm font-medium text-foreground mb-1 block">
                     Category
                   </label>
-                  {isManualMode ? (
-                    <select
-                      value={tool.category}
-                      onChange={(e) => onUpdate(tool.id, 'category', e.target.value)}
-                      className="w-full p-2 border border-input rounded-md bg-background text-foreground"
-                    >
-                      <option value="">Select category</option>
-                      <option value="Sales">Sales</option>
-                      <option value="Marketing">Marketing</option>
-                      <option value="Service">Service</option>
-                      <option value="Development">Development</option>
-                      <option value="Analytics">Analytics</option>
-                      <option value="Communication">Communication</option>
-                      <option value="Finance">Finance</option>
-                      <option value="HR">HR</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  ) : (
-                    <Badge variant="outline" className="w-fit">
-                      {tool.category}
-                    </Badge>
-                  )}
+                  <Badge variant="outline" className="w-fit">
+                    {tool.category}
+                  </Badge>
                 </div>
               </div>
 
@@ -197,18 +156,9 @@ export const SmartToolInput: React.FC<SmartToolInputProps> = ({
                 <label className="text-sm font-medium text-foreground mb-1 block">
                   Description
                 </label>
-                {isManualMode ? (
-                  <textarea
-                    value={tool.description}
-                    onChange={(e) => onUpdate(tool.id, 'description', e.target.value)}
-                    placeholder="Describe what this tool does..."
-                    className="w-full p-2 border border-input rounded-md bg-background text-foreground min-h-[80px] resize-none"
-                  />
-                ) : (
-                  <p className="text-sm text-muted-foreground p-2 bg-muted/30 rounded border">
-                    {tool.description}
-                  </p>
-                )}
+                <p className="text-sm text-muted-foreground p-2 bg-muted/30 rounded border">
+                  {tool.description}
+                </p>
               </div>
             </div>
           )}
