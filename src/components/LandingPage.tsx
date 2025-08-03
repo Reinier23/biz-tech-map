@@ -47,7 +47,7 @@ const LandingPage = () => {
 
             {/* CTA Button */}
             <div className="pt-4">
-              <Link to="/mapper">
+              <Link to="/add-tools">
                 <Button variant="hero" size="lg" className="text-lg px-8 py-4">
                   Start Mapping Your Stack
                   <ArrowRight className="w-5 h-5 ml-2" />
