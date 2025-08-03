@@ -23,7 +23,7 @@ interface Tool {
 
 interface SmartToolInputProps {
   tool: Tool;
-  onUpdate: (id: string, field: keyof Tool, value: string) => void;
+  onUpdate: (id: string, field: keyof Tool, value: string | number) => void;
   onRemove: (id: string) => void;
 }
 
@@ -77,13 +77,13 @@ export const SmartToolInput: React.FC<SmartToolInputProps> = ({
     onUpdate(tool.id, 'name', value);
     
     // Debounce the API call
-    const timeoutId = setTimeout(() => {
-      if (value.trim() && !isManualMode) {
+    if (value.trim() && !isManualMode) {
+      const timeoutId = setTimeout(() => {
         enrichToolData(value);
-      }
-    }, 1000);
-
-    return () => clearTimeout(timeoutId);
+      }, 1000);
+      
+      return () => clearTimeout(timeoutId);
+    }
   }, [enrichToolData, isManualMode, onUpdate, tool.id]);
 
   const toggleManualMode = () => {
