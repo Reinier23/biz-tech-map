@@ -5,6 +5,8 @@ interface Tool {
   name: string;
   category: string;
   description: string;
+  logoUrl?: string;
+  confidence?: number;
 }
 
 interface ToolsContextType {

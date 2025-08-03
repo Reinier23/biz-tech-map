@@ -1,25 +1,26 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, MapPin, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useTools } from "@/contexts/ToolsContext";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Plus, ArrowRight, Lightbulb, Sparkles, ArrowLeft, MapPin } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useTools } from '@/contexts/ToolsContext';
+import { SmartToolInput } from '@/components/SmartToolInput';
 
 interface Tool {
   id: string;
   name: string;
   category: string;
   description: string;
+  logoUrl?: string;
+  confidence?: number;
 }
 
 const AddTools = () => {
   const { tools: contextTools, setTools: setContextTools } = useTools();
   const [tools, setTools] = useState<Tool[]>([
-    { id: "1", name: "", category: "", description: "" }
+    { id: "1", name: "", category: "", description: "", logoUrl: "", confidence: 0 }
   ]);
+  const navigate = useNavigate();
 
   // Load tools from context on mount
   useEffect(() => {
@@ -39,9 +40,11 @@ const AddTools = () => {
   const addTool = () => {
     const newTool: Tool = {
       id: Date.now().toString(),
-      name: "",
-      category: "",
-      description: ""
+      name: '',
+      category: '',
+      description: '',
+      logoUrl: '',
+      confidence: 0
     };
     setTools([...tools, newTool]);
   };
@@ -52,7 +55,7 @@ const AddTools = () => {
     }
   };
 
-  const updateTool = (id: string, field: keyof Tool, value: string) => {
+  const updateTool = (id: string, field: keyof Tool, value: string | number) => {
     setTools(tools.map(tool => 
       tool.id === id ? { ...tool, [field]: value } : tool
     ));
@@ -71,124 +74,58 @@ const AddTools = () => {
           </Link>
           <h1 className="text-4xl font-bold text-foreground mb-2">Add Your Tools</h1>
           <p className="text-muted-foreground text-lg">
-            Enter all the sales, marketing, and service tools your company uses
+            Just enter the tool names - AI will handle the rest automatically!
           </p>
         </div>
 
         {/* Tools Input Card */}
         <Card className="shadow-xl">
           <CardHeader>
-            <CardTitle className="flex items-center text-2xl">
-              <Plus className="w-6 h-6 mr-2 text-primary" />
-              Technology Stack Inventory
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5" />
+              Add Your Tech Tools
             </CardTitle>
+            <CardDescription>
+              Just enter the name of each tool you use - our AI will automatically identify the category, description, and even find the logo. It's that simple!
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Table Header */}
-            <div className="grid grid-cols-12 gap-4 pb-4 border-b border-border">
-              <div className="col-span-4">
-                <h3 className="font-semibold text-foreground">Tool Name</h3>
-              </div>
-              <div className="col-span-3">
-                <h3 className="font-semibold text-foreground">Category</h3>
-              </div>
-              <div className="col-span-4">
-                <h3 className="font-semibold text-foreground">Description (Optional)</h3>
-              </div>
-              <div className="col-span-1">
-                <h3 className="font-semibold text-foreground">Actions</h3>
-              </div>
-            </div>
-
-            {/* Tool Rows */}
             <div className="space-y-4">
-              {tools.map((tool, index) => (
-                <div key={tool.id} className="grid grid-cols-12 gap-4 items-start p-4 rounded-lg bg-card/50 hover:bg-card/80 transition-colors">
-                  {/* Tool Name */}
-                  <div className="col-span-4">
-                    <Input
-                      placeholder="e.g., Salesforce, HubSpot, Slack"
-                      value={tool.name}
-                      onChange={(e) => updateTool(tool.id, "name", e.target.value)}
-                      className="bg-background border-border focus:border-primary"
-                    />
-                  </div>
-
-                  {/* Category Dropdown */}
-                  <div className="col-span-3">
-                    <Select value={tool.category} onValueChange={(value) => updateTool(tool.id, "category", value)}>
-                      <SelectTrigger className="bg-background border-border focus:border-primary">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover border-border shadow-lg z-50">
-                        <SelectItem value="Sales" className="hover:bg-accent focus:bg-accent">
-                          Sales
-                        </SelectItem>
-                        <SelectItem value="Marketing" className="hover:bg-accent focus:bg-accent">
-                          Marketing
-                        </SelectItem>
-                        <SelectItem value="Service" className="hover:bg-accent focus:bg-accent">
-                          Service
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Description */}
-                  <div className="col-span-4">
-                    <Textarea
-                      placeholder="Brief description of how this tool is used..."
-                      value={tool.description}
-                      onChange={(e) => updateTool(tool.id, "description", e.target.value)}
-                      className="bg-background border-border focus:border-primary min-h-[40px] resize-none"
-                      rows={1}
-                    />
-                  </div>
-
-                  {/* Remove Button */}
-                  <div className="col-span-1 flex justify-center">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeTool(tool.id)}
-                      disabled={tools.length === 1}
-                      className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
+              {tools.map((tool) => (
+                <SmartToolInput
+                  key={tool.id}
+                  tool={tool}
+                  onUpdate={updateTool}
+                  onRemove={removeTool}
+                />
               ))}
             </div>
-
-            {/* Add Another Tool Button */}
+            
             <Button
               onClick={addTool}
               variant="outline"
-              className="w-full border-dashed border-2 border-primary/50 hover:border-primary hover:bg-primary/5 text-primary"
+              className="w-full"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="h-4 w-4 mr-2" />
               Add Another Tool
             </Button>
 
-            {/* Summary */}
-            <div className="pt-6 border-t border-border">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">
+            {/* Navigation */}
+            <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t">
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground">
                   {tools.filter(tool => tool.name.trim()).length} tools added
-                </div>
-                <Link to="/tech-map">
-                  <Button 
-                    variant="hero" 
-                    size="lg"
-                    disabled={!hasValidTools}
-                    className="px-8"
-                  >
-                    <MapPin className="w-5 h-5 mr-2" />
-                    View Tech Map
-                  </Button>
-                </Link>
+                </p>
               </div>
+              <Button
+                onClick={() => navigate('/tech-map')}
+                disabled={!hasValidTools}
+                className="gap-2"
+              >
+                <MapPin className="h-4 w-4" />
+                View Tech Map
+                <ArrowRight className="h-4 w-4" />
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -196,12 +133,18 @@ const AddTools = () => {
         {/* Quick Tips */}
         <Card className="mt-8 bg-gradient-to-r from-primary/5 to-primary-glow/5 border-primary/20">
           <CardContent className="pt-6">
-            <h3 className="font-semibold text-foreground mb-3">💡 Quick Tips</h3>
-            <ul className="text-sm text-muted-foreground space-y-2">
-              <li>• Include all tools, even simple ones like email or spreadsheets</li>
-              <li>• Don't worry about getting everything perfect - you can always add more later</li>
-              <li>• Descriptions help identify overlapping functionality between tools</li>
-            </ul>
+            <div className="flex items-start gap-3">
+              <Lightbulb className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-semibold text-foreground mb-3">💡 Quick Tips</h3>
+                <ul className="text-sm text-muted-foreground space-y-2">
+                  <li>• Just type the tool name (e.g., "Salesforce", "Slack", "HubSpot")</li>
+                  <li>• Our AI will automatically find logos, categories, and descriptions</li>
+                  <li>• You can manually edit any auto-filled information if needed</li>
+                  <li>• Include all tools - even simple ones like email or spreadsheets</li>
+                </ul>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
