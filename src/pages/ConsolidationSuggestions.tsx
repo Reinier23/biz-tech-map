@@ -6,8 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Download, Lightbulb, TrendingUp, AlertCircle, CheckCircle, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTools } from "@/contexts/ToolsContext";
-import { createClient } from "@supabase/supabase-js";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ConsolidationAnalysis {
   tool: {
@@ -25,11 +25,6 @@ const ConsolidationSuggestions = () => {
   const { tools } = useTools();
   const [analysisResults, setAnalysisResults] = useState<ConsolidationAnalysis[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-
-  const supabase = createClient(
-    import.meta.env.VITE_SUPABASE_URL,
-    import.meta.env.VITE_SUPABASE_ANON_KEY
-  );
 
   const analyzeToolsWithAI = async () => {
     if (tools.length === 0) return;
@@ -70,11 +65,11 @@ const ConsolidationSuggestions = () => {
   const getActionBadge = (action: string) => {
     switch (action) {
       case "Replace":
-        return <Badge variant="destructive" className="bg-red-100 text-red-800 border-red-200">Replace</Badge>;
+        return <Badge variant="destructive" className="bg-green-100 text-green-800 border-green-200">Replace</Badge>;
       case "Evaluate":
         return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-200">Evaluate</Badge>;
       case "No Match":
-        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Keep</Badge>;
+        return <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200">Keep</Badge>;
       default:
         return <Badge variant="outline">{action}</Badge>;
     }
@@ -116,9 +111,9 @@ const ConsolidationSuggestions = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <Link to="/tech-map" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-4 transition-colors">
+          <Link to="/generate-map" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-4 transition-colors">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Tech Map
+            Back to Generate Map
           </Link>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -222,7 +217,16 @@ const ConsolidationSuggestions = () => {
                 </TableHeader>
                 <TableBody>
                   {analysisResults.map((analysis, index) => (
-                    <TableRow key={`${analysis.tool.name}-${index}`}>
+                    <TableRow 
+                      key={`${analysis.tool.name}-${index}`}
+                      className={
+                        analysis.recommendation === "Replace" 
+                          ? "bg-green-50 hover:bg-green-100" 
+                          : analysis.recommendation === "Evaluate"
+                          ? "bg-yellow-50 hover:bg-yellow-100"
+                          : ""
+                      }
+                    >
                       <TableCell>
                         <div>
                           <div className="font-medium">{analysis.tool.name}</div>
@@ -288,9 +292,9 @@ const ConsolidationSuggestions = () => {
 
         {/* Action Buttons */}
         <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-          <Link to="/tech-map">
+          <Link to="/generate-map">
             <Button variant="outline" size="lg">
-              View Current Map
+              Back to Generate Map
             </Button>
           </Link>
           <Link to="/add-tools">
