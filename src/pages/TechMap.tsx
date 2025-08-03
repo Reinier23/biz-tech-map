@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Download, Settings, Database, MessageSquare, LayoutGrid, Network } from "lucide-react";
+import { ArrowLeft, Download, Settings, Database, MessageSquare, LayoutGrid, Network, Lightbulb } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTools } from "@/contexts/ToolsContext";
 import {
@@ -244,6 +244,12 @@ const TechMap = () => {
           <Link to="/add-tools">
             <Button variant="outline" size="lg">
               Edit Tools
+            </Button>
+          </Link>
+          <Link to="/consolidation">
+            <Button variant="secondary" size="lg">
+              <Lightbulb className="w-4 h-4 mr-2" />
+              Consolidation Ideas
             </Button>
           </Link>
           <Link to="/generate-map">
