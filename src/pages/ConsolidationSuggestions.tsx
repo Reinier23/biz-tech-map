@@ -119,7 +119,7 @@ const ConsolidationSuggestions = () => {
             <div>
               <h1 className="text-4xl font-bold text-foreground mb-2">AI-Powered Consolidation Analysis</h1>
               <p className="text-muted-foreground text-lg">
-                {isLoading ? "Analyzing tools with GPT-4..." : `Analysis of ${tools.length} tools against HubSpot capabilities`}
+                {isLoading ? "Generating consolidation insights..." : `Analysis of ${tools.length} tools against HubSpot capabilities`}
               </p>
             </div>
             <div className="flex gap-2">
@@ -145,7 +145,7 @@ const ConsolidationSuggestions = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-center space-x-2">
                 <RefreshCw className="w-5 h-5 animate-spin" />
-                <p className="text-muted-foreground">Analyzing tools with GPT-4... This may take a moment.</p>
+                <p className="text-muted-foreground">Analyzing your software stack for consolidation opportunities... This may take a moment.</p>
               </div>
             </CardContent>
           </Card>
@@ -202,7 +202,7 @@ const ConsolidationSuggestions = () => {
                 AI-Powered Tool Analysis
               </CardTitle>
               <p className="text-sm text-muted-foreground">
-                Each tool has been analyzed by GPT-4 against HubSpot's capabilities
+                Each tool has been intelligently analyzed against HubSpot's comprehensive capabilities
               </p>
             </CardHeader>
             <CardContent>
