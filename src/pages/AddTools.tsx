@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -96,6 +97,44 @@ const AddTools = () => {
     }));
   };
 
+  const addExampleTool = (toolName: string, category: string) => {
+    // Check if the tool already exists in this category
+    const existingTool = toolsByCategory[category]?.find(tool => 
+      tool.name.toLowerCase() === toolName.toLowerCase()
+    );
+    
+    if (existingTool) return; // Don't add duplicates
+
+    // Find the first empty tool or add a new one
+    const emptyToolIndex = toolsByCategory[category]?.findIndex(tool => !tool.name.trim());
+    
+    if (emptyToolIndex !== -1) {
+      // Fill the empty tool
+      setToolsByCategory(prev => ({
+        ...prev,
+        [category]: prev[category].map((tool, index) => 
+          index === emptyToolIndex 
+            ? { ...tool, name: toolName }
+            : tool
+        )
+      }));
+    } else {
+      // Add a new tool
+      const newTool: Tool = {
+        id: `${category.toLowerCase()}-${Date.now()}`,
+        name: toolName,
+        category,
+        description: '',
+        logoUrl: '',
+        confidence: 0
+      };
+      setToolsByCategory(prev => ({
+        ...prev,
+        [category]: [...prev[category], newTool]
+      }));
+    }
+  };
+
   const removeTool = (id: string, category: string) => {
     setToolsByCategory(prev => ({
       ...prev,
@@ -183,9 +222,13 @@ const AddTools = () => {
                     <p className="text-muted-foreground">{category.description}</p>
                     <div className="flex flex-wrap gap-2 justify-center mt-2">
                       {category.examples.map((example, idx) => (
-                        <span key={idx} className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded">
+                        <button
+                          key={idx}
+                          onClick={() => addExampleTool(example, category.id)}
+                          className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
+                        >
                           {example}
-                        </span>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -245,6 +288,7 @@ const AddTools = () => {
                   <li>• <strong>Sales:</strong> CRM, lead generation, sales automation (e.g., Salesforce, Pipedrive)</li>
                   <li>• <strong>Service:</strong> Customer support, communication tools (e.g., Zendesk, Slack)</li>
                   <li>• Our AI automatically categorizes and finds logos - just enter the tool name!</li>
+                  <li>• Click on any example tool above to quickly add it to your list!</li>
                 </ul>
               </div>
             </div>
