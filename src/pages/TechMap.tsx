@@ -130,7 +130,7 @@ const TechMap = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   const handleExportPDF = () => {
-    // Simple export functionality - in real app would use libraries like jsPDF
+    console.log('Exporting PDF...');
     window.print();
   };
 
