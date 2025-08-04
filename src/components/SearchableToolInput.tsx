@@ -115,6 +115,7 @@ export const SearchableToolInput: React.FC<SearchableToolInputProps> = ({
           role="combobox"
           aria-expanded={open}
           className="w-full justify-between text-left font-normal"
+          onClick={() => setOpen(true)}
         >
           <div className="flex items-center">
             <Search className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -122,14 +123,15 @@ export const SearchableToolInput: React.FC<SearchableToolInputProps> = ({
           </div>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start">
-        <Command>
+      <PopoverContent className="w-full p-0 bg-popover border shadow-lg z-50" align="start" sideOffset={4}>
+        <Command className="w-full">
           <CommandInput
             placeholder={placeholder}
             value={searchValue}
             onValueChange={handleSearchChange}
+            className="border-0"
           />
-          <CommandList>
+          <CommandList className="max-h-60 overflow-y-auto">
             {isLoading ? (
               <div className="flex items-center justify-center p-4">
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -137,7 +139,7 @@ export const SearchableToolInput: React.FC<SearchableToolInputProps> = ({
               </div>
             ) : suggestions.length === 0 && searchValue.length >= 2 ? (
               <CommandEmpty>No tools found.</CommandEmpty>
-            ) : (
+            ) : searchValue.length >= 2 ? (
               <CommandGroup>
                 {suggestions.map((suggestion, index) => (
                   <CommandItem
@@ -171,7 +173,11 @@ export const SearchableToolInput: React.FC<SearchableToolInputProps> = ({
                   </CommandItem>
                 ))}
               </CommandGroup>
-            )}
+            ) : searchValue.length < 2 ? (
+              <div className="p-4 text-sm text-muted-foreground text-center">
+                Start typing to search for tools...
+              </div>
+            ) : null}
           </CommandList>
         </Command>
       </PopoverContent>
