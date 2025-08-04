@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Network, Map, BarChart3, Users, Shield, Zap, Target, Eye, Puzzle, CheckCircle, Star } from "lucide-react";
 import { Link } from "react-router-dom";
-import heroImage from "@/assets/tech-landscape-hero.jpg";
+import heroImage from "@/assets/tech-dashboard-hero.jpg";
 
 const LandingPage = () => {
   const stats = [
