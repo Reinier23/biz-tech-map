@@ -24,18 +24,18 @@ const TechMap = () => {
 
   // Sample data for demo
   const sampleTools = [
-    { id: '1', name: 'Salesforce', category: 'Sales', description: 'Customer relationship management' },
-    { id: '2', name: 'HubSpot', category: 'Marketing', description: 'Inbound marketing and sales platform' },
-    { id: '3', name: 'Zendesk', category: 'Service', description: 'Customer service platform' },
-    { id: '4', name: 'Pipedrive', category: 'Sales', description: 'Sales pipeline management' },
-    { id: '5', name: 'Mailchimp', category: 'Marketing', description: 'Email marketing automation' },
-    { id: '6', name: 'Intercom', category: 'Service', description: 'Customer messaging platform' },
-    { id: '7', name: 'Outreach', category: 'Sales', description: 'Sales engagement platform' },
-    { id: '8', name: 'Pardot', category: 'Marketing', description: 'B2B marketing automation' },
-    { id: '9', name: 'Freshdesk', category: 'Service', description: 'Customer support software' },
-    { id: '10', name: 'LinkedIn Sales Navigator', category: 'Sales', description: 'Social selling platform' },
-    { id: '11', name: 'Google Analytics', category: 'Marketing', description: 'Web analytics service' },
-    { id: '12', name: 'Slack', category: 'Service', description: 'Team communication platform' }
+    { id: '1', name: 'Salesforce', category: 'Sales', confirmedCategory: 'Sales', description: 'Customer relationship management' },
+    { id: '2', name: 'HubSpot', category: 'Marketing', confirmedCategory: 'Marketing', description: 'Inbound marketing and sales platform' },
+    { id: '3', name: 'Zendesk', category: 'Service', confirmedCategory: 'Service', description: 'Customer service platform' },
+    { id: '4', name: 'Pipedrive', category: 'Sales', confirmedCategory: 'Sales', description: 'Sales pipeline management' },
+    { id: '5', name: 'Mailchimp', category: 'Marketing', confirmedCategory: 'Marketing', description: 'Email marketing automation' },
+    { id: '6', name: 'Intercom', category: 'Service', confirmedCategory: 'Service', description: 'Customer messaging platform' },
+    { id: '7', name: 'Outreach', category: 'Sales', confirmedCategory: 'Sales', description: 'Sales engagement platform' },
+    { id: '8', name: 'Pardot', category: 'Marketing', confirmedCategory: 'Marketing', description: 'B2B marketing automation' },
+    { id: '9', name: 'Freshdesk', category: 'Service', confirmedCategory: 'Service', description: 'Customer support software' },
+    { id: '10', name: 'LinkedIn Sales Navigator', category: 'Sales', confirmedCategory: 'Sales', description: 'Social selling platform' },
+    { id: '11', name: 'Google Analytics', category: 'Marketing', confirmedCategory: 'Marketing', description: 'Web analytics service' },
+    { id: '12', name: 'Slack', category: 'Service', confirmedCategory: 'Service', description: 'Team communication platform' }
   ];
 
   // Use sample data if no tools are loaded
@@ -43,9 +43,9 @@ const TechMap = () => {
 
   // Categorize tools (use sample data if no tools)
   const categorizedTools = {
-    Sales: displayTools.filter(tool => tool.category === "Sales"),
-    Marketing: displayTools.filter(tool => tool.category === "Marketing"),
-    Service: displayTools.filter(tool => tool.category === "Service"),
+    Sales: displayTools.filter(tool => (tool.confirmedCategory || tool.category) === "Sales"),
+    Marketing: displayTools.filter(tool => (tool.confirmedCategory || tool.category) === "Marketing"),
+    Service: displayTools.filter(tool => (tool.confirmedCategory || tool.category) === "Service"),
   };
 
   // Get category icon and color

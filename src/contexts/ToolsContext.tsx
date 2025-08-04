@@ -4,6 +4,7 @@ interface Tool {
   id: string;
   name: string;
   category: string;
+  confirmedCategory?: string; // User's confirmed category choice
   description: string;
   logoUrl?: string;
   confidence?: number;

@@ -12,6 +12,7 @@ interface Tool {
   id: string;
   name: string;
   category: string;
+  confirmedCategory?: string; // User's confirmed category choice
   description: string;
   logoUrl?: string;
   confidence?: number;
@@ -55,7 +56,7 @@ const AddTools = () => {
   useEffect(() => {
     if (contextTools.length > 0) {
       const categorized = categories.reduce((acc, cat) => {
-        acc[cat.id] = contextTools.filter(tool => tool.category === cat.id);
+        acc[cat.id] = contextTools.filter(tool => (tool.confirmedCategory || tool.category) === cat.id);
         // Ensure at least one empty tool per category
         if (acc[cat.id].length === 0) {
           acc[cat.id] = [{ 
@@ -76,10 +77,10 @@ const AddTools = () => {
   // Save to context when tools change, but avoid infinite loops
   useEffect(() => {
     const allTools = Object.values(toolsByCategory).flat();
-    const validTools = allTools.filter(tool => tool.name.trim() && tool.category);
+    const validTools = allTools.filter(tool => tool.name.trim() && (tool.confirmedCategory || tool.category));
     
     // Only update context if tools actually changed
-    const currentValidTools = contextTools.filter(tool => tool.name.trim() && tool.category);
+    const currentValidTools = contextTools.filter(tool => tool.name.trim() && (tool.confirmedCategory || tool.category));
     const toolsChanged = validTools.length !== currentValidTools.length || 
       validTools.some(tool => !currentValidTools.find(ct => ct.id === tool.id && ct.name === tool.name));
     
@@ -163,7 +164,7 @@ const AddTools = () => {
   };
 
   const getAllValidTools = () => {
-    return Object.values(toolsByCategory).flat().filter(tool => tool.name.trim() && tool.category);
+    return Object.values(toolsByCategory).flat().filter(tool => tool.name.trim() && (tool.confirmedCategory || tool.category));
   };
 
   const getToolCountForCategory = (category: string) => {

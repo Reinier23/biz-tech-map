@@ -14,6 +14,7 @@ interface ConsolidationAnalysis {
     id: string;
     name: string;
     category: string;
+    confirmedCategory?: string;
     description: string;
   };
   category: string;
@@ -31,8 +32,14 @@ const ConsolidationSuggestions = () => {
     
     setIsLoading(true);
     try {
+      // Use confirmed category if available, otherwise fall back to AI category
+      const toolsWithConfirmedCategories = tools.map(tool => ({
+        ...tool,
+        category: tool.confirmedCategory || tool.category
+      }));
+      
       const { data, error } = await supabase.functions.invoke('suggestConsolidation', {
-        body: { tools }
+        body: { tools: toolsWithConfirmedCategories }
       });
 
       if (error) {
@@ -242,7 +249,7 @@ const ConsolidationSuggestions = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{analysis.tool.category}</Badge>
+                        <Badge variant="outline">{analysis.tool.confirmedCategory || analysis.tool.category}</Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">

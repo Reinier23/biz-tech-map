@@ -25,10 +25,11 @@ const GenerateMap = () => {
   };
 
   const toolsByCategory = tools.reduce((acc, tool) => {
-    if (!acc[tool.category]) {
-      acc[tool.category] = [];
+    const effectiveCategory = tool.confirmedCategory || tool.category;
+    if (!acc[effectiveCategory]) {
+      acc[effectiveCategory] = [];
     }
-    acc[tool.category].push(tool);
+    acc[effectiveCategory].push(tool);
     return acc;
   }, {} as Record<string, typeof tools>);
 
@@ -202,7 +203,7 @@ const GenerateMap = () => {
                   >
                     <div className="flex items-center justify-between mb-2">
                       <div className="font-medium">{tool.name}</div>
-                      <Badge variant="outline">{tool.category}</Badge>
+                      <Badge variant="outline">{tool.confirmedCategory || tool.category}</Badge>
                     </div>
                     <div className="text-xs text-muted-foreground mb-3">
                       {tool.description?.slice(0, 80)}...

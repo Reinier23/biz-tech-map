@@ -5,13 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Loader2, Sparkles, X } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Sparkles, X, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Tool {
   id: string;
   name: string;
   category: string;
+  confirmedCategory?: string; // User's confirmed category choice
   description: string;
   logoUrl?: string;
   confidence?: number;
@@ -52,12 +54,14 @@ export const SmartToolInput: React.FC<SmartToolInputProps> = ({
       if (data && !data.error) {
         setEnrichedData(data);
         onUpdate(tool.id, 'category', data.category);
+        onUpdate(tool.id, 'confirmedCategory', data.category); // Set initial confirmed category to AI's guess
         onUpdate(tool.id, 'description', data.description);
         onUpdate(tool.id, 'logoUrl', data.logoUrl);
         onUpdate(tool.id, 'confidence', data.confidence);
       } else if (data?.fallback) {
         setEnrichedData(data.fallback);
         onUpdate(tool.id, 'category', data.fallback.category);
+        onUpdate(tool.id, 'confirmedCategory', data.fallback.category); // Set initial confirmed category
         onUpdate(tool.id, 'description', data.fallback.description);
       }
     } catch (error) {
@@ -79,6 +83,10 @@ export const SmartToolInput: React.FC<SmartToolInputProps> = ({
       return () => clearTimeout(timeoutId);
     }
   }, [enrichToolData, onUpdate, tool.id]);
+
+  const handleCategoryConfirm = useCallback((selectedCategory: string) => {
+    onUpdate(tool.id, 'confirmedCategory', selectedCategory);
+  }, [onUpdate, tool.id]);
 
   return (
     <Card className="p-6 space-y-4 relative">
@@ -144,11 +152,41 @@ export const SmartToolInput: React.FC<SmartToolInputProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm font-medium text-foreground mb-1 block">
-                    Category
+                    AI Category
                   </label>
                   <Badge variant="outline" className="w-fit">
                     {tool.category}
                   </Badge>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">
+                    Confirm Category
+                  </label>
+                  <Select
+                    value={tool.confirmedCategory || tool.category}
+                    onValueChange={handleCategoryConfirm}
+                  >
+                    <SelectTrigger className="w-full bg-background border-2">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border-2 shadow-lg z-50">
+                      <SelectItem value="Sales" className="hover:bg-secondary focus:bg-secondary">
+                        Sales
+                      </SelectItem>
+                      <SelectItem value="Marketing" className="hover:bg-secondary focus:bg-secondary">
+                        Marketing
+                      </SelectItem>
+                      <SelectItem value="Service" className="hover:bg-secondary focus:bg-secondary">
+                        Service
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {tool.confirmedCategory && tool.confirmedCategory !== tool.category && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <CheckCircle className="h-3 w-3 text-green-600" />
+                      <span className="text-xs text-green-600">Category updated</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
