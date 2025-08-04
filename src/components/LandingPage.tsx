@@ -156,7 +156,7 @@ const LandingPage = () => {
                 alt="Tech stack visualization dashboard" 
                 className="w-full h-auto animate-float"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent opacity-60"></div>
+              
             </div>
             {/* Floating elements */}
             <div className="absolute -top-4 -right-4 w-20 h-20 bg-primary/10 rounded-full blur-xl animate-pulse"></div>
