@@ -22,11 +22,30 @@ const TechMap = () => {
   const { tools } = useTools();
   const [isGridView, setIsGridView] = useState(true);
 
-  // Categorize tools
+  // Sample data for demo
+  const sampleTools = [
+    { id: '1', name: 'Salesforce', category: 'Sales', description: 'Customer relationship management' },
+    { id: '2', name: 'HubSpot', category: 'Marketing', description: 'Inbound marketing and sales platform' },
+    { id: '3', name: 'Zendesk', category: 'Service', description: 'Customer service platform' },
+    { id: '4', name: 'Pipedrive', category: 'Sales', description: 'Sales pipeline management' },
+    { id: '5', name: 'Mailchimp', category: 'Marketing', description: 'Email marketing automation' },
+    { id: '6', name: 'Intercom', category: 'Service', description: 'Customer messaging platform' },
+    { id: '7', name: 'Outreach', category: 'Sales', description: 'Sales engagement platform' },
+    { id: '8', name: 'Pardot', category: 'Marketing', description: 'B2B marketing automation' },
+    { id: '9', name: 'Freshdesk', category: 'Service', description: 'Customer support software' },
+    { id: '10', name: 'LinkedIn Sales Navigator', category: 'Sales', description: 'Social selling platform' },
+    { id: '11', name: 'Google Analytics', category: 'Marketing', description: 'Web analytics service' },
+    { id: '12', name: 'Slack', category: 'Service', description: 'Team communication platform' }
+  ];
+
+  // Use sample data if no tools are loaded
+  const displayTools = tools.length > 0 ? tools : sampleTools;
+
+  // Categorize tools (use sample data if no tools)
   const categorizedTools = {
-    Sales: tools.filter(tool => tool.category === "Sales"),
-    Marketing: tools.filter(tool => tool.category === "Marketing"),
-    Service: tools.filter(tool => tool.category === "Service"),
+    Sales: displayTools.filter(tool => tool.category === "Sales"),
+    Marketing: displayTools.filter(tool => tool.category === "Marketing"),
+    Service: displayTools.filter(tool => tool.category === "Service"),
   };
 
   // Get category icon and color
@@ -115,24 +134,6 @@ const TechMap = () => {
     window.print();
   };
 
-  if (tools.length === 0) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary flex items-center justify-center">
-        <Card className="w-full max-w-md mx-4">
-          <CardContent className="pt-6 text-center">
-            <h2 className="text-2xl font-bold mb-4">No Tools Added Yet</h2>
-            <p className="text-muted-foreground mb-6">
-              Add some tools first to see your tech map visualization.
-            </p>
-            <Link to="/add-tools">
-              <Button variant="hero">Add Your First Tool</Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary">
       <div className="container mx-auto px-4 py-8">
@@ -146,7 +147,7 @@ const TechMap = () => {
             <div>
               <h1 className="text-4xl font-bold text-foreground mb-2">Your Tech Map</h1>
               <p className="text-muted-foreground text-lg">
-                {tools.length} tools across {Object.values(categorizedTools).filter(cat => cat.length > 0).length} categories
+                {displayTools.length} tools across {Object.values(categorizedTools).filter(cat => cat.length > 0).length} categories
               </p>
             </div>
             <div className="flex items-center gap-4">
