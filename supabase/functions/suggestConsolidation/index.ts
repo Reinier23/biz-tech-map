@@ -14,7 +14,7 @@ interface Tool {
 interface ConsolidationResult {
   tool: Tool;
   category: string;
-  recommendation: "Replace" | "Evaluate" | "No Match";
+  recommendation: "Replace" | "Evaluate" | "No Match" | "Keep";
   reason: string;
 }
 
@@ -53,6 +53,16 @@ serve(async (req) => {
     // Process each tool with GPT-4
     for (const tool of tools) {
       try {
+        // Check if the tool is HubSpot itself (case-insensitive)
+        if (tool.name.toLowerCase().includes('hubspot')) {
+          results.push({
+            tool,
+            category: tool.category,
+            recommendation: "Keep",
+            reason: "This is the core platform being compared; no replacement is needed."
+          })
+          continue
+        }
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
