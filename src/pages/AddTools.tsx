@@ -66,10 +66,10 @@ const AddTools = () => {
   // Save to context when tools change, but avoid infinite loops
   useEffect(() => {
     const allTools = Object.values(toolsByCategory).flat();
-    const validTools = allTools.filter(tool => tool.name.trim() && tool.category);
+    const validTools = allTools.filter(tool => tool.name && tool.name.trim() && tool.category);
     
     // Only update context if tools actually changed
-    const currentValidTools = contextTools.filter(tool => tool.name.trim() && tool.category);
+    const currentValidTools = contextTools.filter(tool => tool.name && tool.name.trim() && tool.category);
     const toolsChanged = validTools.length !== currentValidTools.length || 
       validTools.some(tool => !currentValidTools.find(ct => ct.id === tool.id && ct.name === tool.name));
     
@@ -88,7 +88,7 @@ const AddTools = () => {
   const addExampleTool = (toolName: string, category: string) => {
     // Check if the tool already exists in this category
     const existingTool = toolsByCategory[category]?.find(tool => 
-      tool.name.toLowerCase() === toolName.toLowerCase()
+      tool.name && tool.name.toLowerCase() === toolName.toLowerCase()
     );
     
     if (existingTool) return; // Don't add duplicates
@@ -132,11 +132,11 @@ const AddTools = () => {
   };
 
   const getAllValidTools = () => {
-    return Object.values(toolsByCategory).flat().filter(tool => tool.name.trim() && tool.category);
+    return Object.values(toolsByCategory).flat().filter(tool => tool.name && tool.name.trim() && tool.category);
   };
 
   const getToolCountForCategory = (category: string) => {
-    return toolsByCategory[category]?.filter(tool => tool.name.trim()).length || 0;
+    return toolsByCategory[category]?.filter(tool => tool.name && tool.name.trim()).length || 0;
   };
 
   const hasValidTools = getAllValidTools().length > 0;
