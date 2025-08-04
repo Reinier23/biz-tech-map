@@ -3,10 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, ArrowRight, Lightbulb, Sparkles, ArrowLeft, MapPin, Settings, MessageSquare, Database } from 'lucide-react';
+import { ArrowRight, Lightbulb, Sparkles, ArrowLeft, MapPin, Settings, MessageSquare, Database } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTools } from '@/contexts/ToolsContext';
-import { SmartToolInput } from '@/components/SmartToolInput';
+import { SearchableToolInput } from '@/components/SearchableToolInput';
+import { SelectedToolCard } from '@/components/SelectedToolCard';
 
 interface Tool {
   id: string;
@@ -44,9 +45,9 @@ const categories = [
 const AddTools = () => {
   const { tools: contextTools, setTools: setContextTools } = useTools();
   const [toolsByCategory, setToolsByCategory] = useState<Record<string, Tool[]>>({
-    Marketing: [{ id: "marketing-1", name: "", category: "Marketing", description: "", logoUrl: "", confidence: 0 }],
-    Sales: [{ id: "sales-1", name: "", category: "Sales", description: "", logoUrl: "", confidence: 0 }],
-    Service: [{ id: "service-1", name: "", category: "Service", description: "", logoUrl: "", confidence: 0 }]
+    Marketing: [],
+    Sales: [],
+    Service: []
   });
   const [activeTab, setActiveTab] = useState('Marketing');
   const navigate = useNavigate();
@@ -56,17 +57,6 @@ const AddTools = () => {
     if (contextTools.length > 0) {
       const categorized = categories.reduce((acc, cat) => {
         acc[cat.id] = contextTools.filter(tool => tool.category === cat.id);
-        // Ensure at least one empty tool per category
-        if (acc[cat.id].length === 0) {
-          acc[cat.id] = [{ 
-            id: `${cat.id.toLowerCase()}-${Date.now()}`, 
-            name: "", 
-            category: cat.id, 
-            description: "", 
-            logoUrl: "", 
-            confidence: 0 
-          }];
-        }
         return acc;
       }, {} as Record<string, Tool[]>);
       setToolsByCategory(categorized);
@@ -88,18 +78,10 @@ const AddTools = () => {
     }
   }, [toolsByCategory]);
 
-  const addTool = (category: string) => {
-    const newTool: Tool = {
-      id: `${category.toLowerCase()}-${Date.now()}`,
-      name: '',
-      category,
-      description: '',
-      logoUrl: '',
-      confidence: 0
-    };
+  const addTool = (tool: Tool) => {
     setToolsByCategory(prev => ({
       ...prev,
-      [category]: [...prev[category], newTool]
+      [tool.category]: [...(prev[tool.category] || []), tool]
     }));
   };
 
@@ -111,43 +93,30 @@ const AddTools = () => {
     
     if (existingTool) return; // Don't add duplicates
 
-    // Find the first empty tool or add a new one
-    const emptyToolIndex = toolsByCategory[category]?.findIndex(tool => !tool.name.trim());
-    
-    if (emptyToolIndex !== -1) {
-      // Fill the empty tool
-      setToolsByCategory(prev => ({
-        ...prev,
-        [category]: prev[category].map((tool, index) => 
-          index === emptyToolIndex 
-            ? { ...tool, name: toolName }
-            : tool
-        )
-      }));
-    } else {
-      // Add a new tool
-      const newTool: Tool = {
-        id: `${category.toLowerCase()}-${Date.now()}`,
-        name: toolName,
-        category,
-        description: '',
-        logoUrl: '',
-        confidence: 0
-      };
-      setToolsByCategory(prev => ({
-        ...prev,
-        [category]: [...prev[category], newTool]
-      }));
-    }
-  };
+    const newTool: Tool = {
+      id: crypto.randomUUID(),
+      name: toolName,
+      category,
+      description: '',
+    };
 
-  const removeTool = (id: string, category: string) => {
     setToolsByCategory(prev => ({
       ...prev,
-      [category]: prev[category].length > 1 
-        ? prev[category].filter(tool => tool.id !== id)
-        : prev[category]
+      [category]: [...(prev[category] || []), newTool]
     }));
+  };
+
+  const removeTool = (id: string) => {
+    setToolsByCategory(prev => {
+      const updated = { ...prev };
+      
+      // Find and remove the tool from any category
+      Object.keys(updated).forEach(category => {
+        updated[category] = (updated[category] || []).filter(tool => tool.id !== id);
+      });
+      
+      return updated;
+    });
   };
 
   const updateTool = (id: string, field: keyof Tool, value: string | number) => {
@@ -220,44 +189,48 @@ const AddTools = () => {
 
               {categories.map((category) => (
                 <TabsContent key={category.id} value={category.id} className="space-y-6 mt-6">
-                  <div className="text-center pb-4 border-b">
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                      <category.icon className="h-6 w-6 text-primary" />
-                      <h3 className="text-lg font-semibold">{category.name} Tools</h3>
-                    </div>
-                    <p className="text-muted-foreground">{category.description}</p>
-                    <div className="flex flex-wrap gap-2 justify-center mt-2">
-                      {category.examples.map((example, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => addExampleTool(example, category.id)}
-                          className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
-                        >
-                          {example}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <div className="space-y-6">
+                    {/* Search input */}
+                    <SearchableToolInput
+                      category={category.id}
+                      onToolSelect={addTool}
+                      placeholder={`Search for ${category.name.toLowerCase()} tools...`}
+                    />
 
-                  <div className="space-y-4">
-                    {toolsByCategory[category.id]?.map((tool) => (
-                      <SmartToolInput
-                        key={tool.id}
-                        tool={tool}
-                        onUpdate={updateTool}
-                        onRemove={(id: string) => removeTool(id, category.id)}
-                      />
-                    ))}
+                    {/* Example tools */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-medium text-muted-foreground">Popular {category.name} tools:</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {category.examples.map((example) => (
+                          <Button
+                            key={example}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => addExampleTool(example, category.id)}
+                            className="text-xs"
+                          >
+                            {example}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Selected tools */}
+                    {(toolsByCategory[category.id] || []).length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-medium">Selected {category.name} tools:</h4>
+                        <div className="grid gap-2">
+                          {(toolsByCategory[category.id] || []).map((tool) => (
+                            <SelectedToolCard
+                              key={tool.id}
+                              tool={tool}
+                              onRemove={removeTool}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  
-                  <Button
-                    onClick={() => addTool(category.id)}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Another {category.name} Tool
-                  </Button>
                 </TabsContent>
               ))}
             </Tabs>
