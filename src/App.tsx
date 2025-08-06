@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Mapper from "./pages/Mapper";
 import AddTools from "./pages/AddTools";
 import TechMap from "./pages/TechMap";
+import UnifiedTechMap from "./pages/UnifiedTechMap";
 import ConsolidationSuggestions from "./pages/ConsolidationSuggestions";
 import GenerateMap from "./pages/GenerateMap";
 import QACheck from "./pages/QACheck";
@@ -25,7 +26,8 @@ const App = () => {
               <Route path="/" element={<Index />} />
               <Route path="/mapper" element={<Mapper />} />
               <Route path="/add-tools" element={<AddTools />} />
-              <Route path="/tech-map" element={<TechMap />} />
+              <Route path="/tech-map" element={<UnifiedTechMap />} />
+              <Route path="/legacy-tech-map" element={<TechMap />} />
               <Route path="/consolidation" element={<ConsolidationSuggestions />} />
               <Route path="/generate-map" element={<GenerateMap />} />
               <Route path="/qa-check" element={<QACheck />} />

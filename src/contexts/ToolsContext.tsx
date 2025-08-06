@@ -8,6 +8,7 @@ interface Tool {
   description: string;
   logoUrl?: string;
   confidence?: number;
+  manualRecommendation?: "Replace" | "Evaluate" | "Keep"; // User's manual override
 }
 
 interface ToolsContextType {
