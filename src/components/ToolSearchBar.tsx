@@ -33,10 +33,12 @@ export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existin
     setSelectedIndex(0);
   }, [query, existingTools]);
 
-  // Show suggestions when input is focused or has content
+  // Show suggestions when input has content
   useEffect(() => {
-    if (query.length >= 0) {
+    if (query.length > 0) {
       setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
     }
   }, [query]);
 
