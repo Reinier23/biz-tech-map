@@ -1,0 +1,22 @@
+-- Insert initial tools catalog entries
+INSERT INTO public.tools_catalog (id, name, category, domain) VALUES
+('greenhouse', 'Greenhouse', 'HR', 'greenhouse.io'),
+('slack', 'Slack', 'Communication', 'slack.com'),
+('jira', 'Jira', 'Project Management', 'atlassian.net'),
+('salesforce', 'Salesforce', 'CRM', 'salesforce.com'),
+('hubspot', 'HubSpot', 'Marketing', 'hubspot.com'),
+('zoom', 'Zoom', 'Communication', 'zoom.us'),
+('figma', 'Figma', 'Design', 'figma.com'),
+('notion', 'Notion', 'Productivity', 'notion.so'),
+('github', 'GitHub', 'Development', 'github.com'),
+('stripe', 'Stripe', 'Finance', 'stripe.com'),
+('asana', 'Asana', 'Project Management', 'asana.com'),
+('trello', 'Trello', 'Project Management', 'trello.com'),
+('dropbox', 'Dropbox', 'Storage', 'dropbox.com'),
+('google-workspace', 'Google Workspace', 'Productivity', 'workspace.google.com'),
+('microsoft-365', 'Microsoft 365', 'Productivity', 'office.com'),
+('zendesk', 'Zendesk', 'Customer Support', 'zendesk.com'),
+('intercom', 'Intercom', 'Customer Support', 'intercom.com'),
+('mailchimp', 'Mailchimp', 'Marketing', 'mailchimp.com'),
+('calendly', 'Calendly', 'Scheduling', 'calendly.com'),
+('docusign', 'DocuSign', 'Document Management', 'docusign.com');
