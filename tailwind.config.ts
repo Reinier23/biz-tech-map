@@ -64,6 +64,10 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				}
 			},
+			fontFamily: {
+				playfair: ["Playfair Display", "serif"],
+				inter: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"]
+			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',

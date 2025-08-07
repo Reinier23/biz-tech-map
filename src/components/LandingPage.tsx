@@ -8,6 +8,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import heroImage from "@/assets/tech-stack-consolidation-hero.jpg";
 
+import { Helmet } from "react-helmet-async";
+import { Link } from "react-router-dom";
+
 const LandingPage = () => {
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -132,28 +135,65 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <div className="container mx-auto px-4 py-20 lg:py-32">
-        <div className="text-center space-y-8 max-w-4xl mx-auto">
-          <h1 className="text-4xl lg:text-7xl font-bold text-foreground leading-tight">
-            Your Tech Stack Is Costing You
-            <span className="bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-              {" "}More Than You Think.
-            </span>
-          </h1>
-          <p className="text-xl lg:text-2xl text-muted-foreground leading-relaxed max-w-3xl mx-auto">
-            Biz Tech Map helps you map, analyze, and optimize your SaaS tools — powered by AI. Cut redundant tools, reduce spend, and make smarter software decisions.
-          </p>
-          
-          {/* Primary CTA */}
-          <div className="pt-8">
-            <EmailForm label="Join Early Access" size="large" />
-          </div>
+      <Helmet>
+        <title>Biz Tech Map – Map Your Stack, Cut Costs with Confidence</title>
+        <meta name="description" content="See every tool, eliminate duplicates, and consolidate spend. Join early access to Biz Tech Map." />
+        <link rel="canonical" href="/" />
+        <meta property="og:title" content="Biz Tech Map – Map Your Stack, Cut Costs with Confidence" />
+        <meta property="og:description" content="See every tool, eliminate duplicates, and consolidate spend. Join early access to Biz Tech Map." />
+        <meta property="og:type" content="website" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "Biz Tech Map",
+          applicationCategory: "BusinessApplication",
+          offers: { "@type": "Offer", price: "0", priceCurrency: "USD" }
+        })}</script>
+      </Helmet>
+
+      <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <Link to="/" className="font-semibold text-foreground">Biz Tech Map</Link>
+          <nav className="hidden md:flex items-center gap-6 text-sm">
+            <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
+            <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">How it works</a>
+            <a href="#integrations" className="text-muted-foreground hover:text-foreground transition-colors">Integrations</a>
+            <a href="#faq" className="text-muted-foreground hover:text-foreground transition-colors">FAQ</a>
+          </nav>
+          <a href="#pricing" className="hidden md:block">
+            <Button className="px-4">Get Early Access</Button>
+          </a>
         </div>
+      </header>
+
+      <main>
+        {/* Hero Section */}
+        <section className="container mx-auto px-4 py-20 lg:py-32" id="hero">
+          <div className="grid lg:grid-cols-2 items-center gap-12">
+            <div className="text-center lg:text-left space-y-8 max-w-xl mx-auto lg:mx-0">
+              <p className="text-sm font-medium tracking-widest uppercase text-primary">AI-powered tech mapping</p>
+              <h1 className="text-4xl lg:text-6xl font-bold text-foreground leading-tight font-playfair">
+                See your entire tech stack, then cut costs with confidence
+              </h1>
+              <p className="text-lg lg:text-xl text-muted-foreground leading-relaxed">
+                Visualize every tool, find overlaps, and get AI suggestions to consolidate spend.
+              </p>
+              <div className="pt-2 max-w-xl">
+                <EmailForm label="Get Early Access" size="large" />
+                <p className="mt-3 text-xs text-muted-foreground">No spam • Cancel anytime • Priority for first 1,000 signups</p>
+              </div>
+            </div>
+            <div className="relative">
+              <div className="rounded-xl overflow-hidden border bg-card shadow">
+                <img src={heroImage} alt="Biz Tech Map dashboard showing stack mapping and consolidation suggestions" loading="lazy" decoding="async" className="w-full h-auto" />
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
 
       {/* Logo Section */}
-      <div className="border-t border-b bg-muted/30 py-12">
+      <section id="integrations" className="border-t border-b bg-muted/30 py-12">
         <div className="container mx-auto px-4">
           <div className="text-center space-y-8">
             <p className="text-sm text-muted-foreground font-medium uppercase tracking-wider">
@@ -168,7 +208,7 @@ const LandingPage = () => {
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Callout Section */}
       <div className="py-20 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5">
@@ -185,7 +225,7 @@ const LandingPage = () => {
       </div>
 
       {/* Features Section */}
-      <div className="py-20">
+      <section id="features" className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
@@ -209,10 +249,10 @@ const LandingPage = () => {
             })}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* How It Works */}
-      <div className="py-20 bg-muted/30">
+      <section id="how-it-works" className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
@@ -232,7 +272,7 @@ const LandingPage = () => {
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Coming Soon Features */}
       <div className="py-20">
@@ -260,7 +300,7 @@ const LandingPage = () => {
       </div>
 
       {/* FAQ Section */}
-      <div className="py-20 bg-muted/30">
+      <section id="faq" className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
@@ -286,10 +326,10 @@ const LandingPage = () => {
             </Accordion>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Final CTA */}
-      <div className="py-24 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10">
+      <section id="pricing" className="py-24 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10">
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-3xl mx-auto space-y-8">
             <h2 className="text-3xl lg:text-5xl font-bold text-foreground leading-tight">
@@ -303,10 +343,12 @@ const LandingPage = () => {
             </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      </main>
 
       {/* Footer */}
-      <div className="bg-card/30 py-12 border-t">
+      <footer className="bg-card/30 py-12 border-t">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 text-sm text-muted-foreground">
             <span>© 2025 Biz Tech Map</span>
@@ -316,7 +358,7 @@ const LandingPage = () => {
             </div>
           </div>
         </div>
-      </div>
+      </footer>
     </div>
   );
 };
