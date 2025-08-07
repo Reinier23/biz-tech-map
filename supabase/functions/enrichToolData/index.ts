@@ -43,6 +43,12 @@ Categories:
 - Development: Code repositories, deployment, developer tools, infrastructure, DevOps
 - Other: Tools that don't clearly fit into the above categories
 
+CONFIDENCE GUIDELINES:
+- Use confidence 80-100 only when you are very certain about the categorization
+- Use confidence 60-79 for tools you recognize but aren't completely sure about
+- Use confidence 0-59 for unknown tools or when uncertain
+- Be conservative - it's better to have low confidence than incorrectly categorize
+
 Return a JSON object with:
 - category: the most appropriate category from the list above
 - description: a concise 1-2 sentence description of what the tool does
@@ -97,13 +103,23 @@ Example response:
     let enrichedData
     try {
       enrichedData = JSON.parse(content)
+      
+      // Apply confidence-based auto-assignment logic
+      if (enrichedData.confidence < 80) {
+        // Low confidence: force to "Other" category for manual override
+        enrichedData.category = "Other"
+      }
+      
     } catch (parseError) {
+      console.error('JSON parsing failed:', parseError)
       // Fallback if JSON parsing fails
       enrichedData = {
         category: "Other",
         description: `${toolName} - Unable to fetch detailed information`,
         logoUrl: "",
-        confidence: 20
+        confidence: 0,
+        reasoning: "Failed to parse AI response",
+        alternativeCategories: []
       }
     }
 
@@ -126,7 +142,9 @@ Example response:
           category: "Other",
           description: "Please add description manually",
           logoUrl: "",
-          confidence: 0
+          confidence: 0,
+          reasoning: "AI enrichment failed",
+          alternativeCategories: []
         }
       }),
       { 

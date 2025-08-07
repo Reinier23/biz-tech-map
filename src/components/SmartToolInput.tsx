@@ -108,6 +108,7 @@ export const SmartToolInput: React.FC<SmartToolInputProps> = ({
 
   const handleCategoryConfirm = useCallback((selectedCategory: string) => {
     onUpdate(tool.id, 'confirmedCategory', selectedCategory);
+    onUpdate(tool.id, 'category', selectedCategory);
   }, [onUpdate, tool.id]);
 
   return (
@@ -190,7 +191,7 @@ export const SmartToolInput: React.FC<SmartToolInputProps> = ({
                     </Badge>
                   </div>
                   
-                  {(!tool.confidence || tool.confidence < 80) && (
+          {(tool.category === "Other" || !tool.confidence || tool.confidence < 80) && !tool.confirmedCategory && (
                     <div className="mt-3">
                       <label className="text-sm font-medium text-foreground mb-2 block">
                         Override Category
@@ -214,12 +215,6 @@ export const SmartToolInput: React.FC<SmartToolInputProps> = ({
                           ))}
                         </SelectContent>
                       </Select>
-                      {tool.confirmedCategory && tool.confirmedCategory !== tool.category && (
-                        <div className="flex items-center gap-1 mt-2">
-                          <CheckCircle className="h-3 w-3 text-green-600" />
-                          <span className="text-xs text-green-600">Category overridden</span>
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>

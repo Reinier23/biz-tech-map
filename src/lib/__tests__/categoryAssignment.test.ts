@@ -57,6 +57,51 @@ describe('Category Assignment Logic', () => {
     expect(finalCategory).toBe('Sales');
   });
 
+  it('should handle confidence-based auto-assignment', () => {
+    const highConfidenceResponse = {
+      category: 'Marketing',
+      confidence: 95,
+      description: 'High confidence categorization',
+      logoUrl: 'https://example.com/logo.png'
+    };
+
+    // High confidence should preserve AI suggestion
+    const finalCategory = highConfidenceResponse.confidence >= 80 
+      ? highConfidenceResponse.category 
+      : 'Other';
+    expect(finalCategory).toBe('Marketing');
+
+    const lowConfidenceResponse = {
+      category: 'Sales',
+      confidence: 65,
+      description: 'Low confidence categorization',
+      logoUrl: ''
+    };
+
+    // Low confidence should default to "Other"
+    const lowConfidenceFinalCategory = lowConfidenceResponse.confidence >= 80 
+      ? lowConfidenceResponse.category 
+      : 'Other';
+    expect(lowConfidenceFinalCategory).toBe('Other');
+  });
+
+  it('should handle edge function error responses', () => {
+    const errorResponse = {
+      error: 'OpenAI API error',
+      fallback: {
+        category: 'Other',
+        description: 'Please add description manually',
+        logoUrl: '',
+        confidence: 0,
+        reasoning: 'AI enrichment failed',
+        alternativeCategories: []
+      }
+    };
+
+    expect(errorResponse.fallback.category).toBe('Other');
+    expect(errorResponse.fallback.confidence).toBe(0);
+  });
+
   it('should handle backward compatibility for legacy tools', () => {
     const legacyTool = {
       id: '1',
@@ -71,7 +116,7 @@ describe('Category Assignment Logic', () => {
     expect(hasConfidence).toBe(false);
     
     // Should default to showing override options for legacy tools
-    const shouldShowOverride = !('confidence' in legacyTool) || (legacyTool as any).confidence < 80;
+    const shouldShowOverride = legacyTool.category === 'Other' || !('confidence' in legacyTool);
     expect(shouldShowOverride).toBe(true);
   });
 });
