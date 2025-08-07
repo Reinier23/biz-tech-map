@@ -142,7 +142,7 @@ const LandingPage = () => {
             </span>
           </h1>
           <p className="text-xl lg:text-2xl text-muted-foreground leading-relaxed max-w-3xl mx-auto">
-            Biz Tech Map helps you map, analyze, and optimize your SaaS tools — powered by GPT. Cut redundant tools, reduce spend, and make smarter software decisions.
+            Biz Tech Map helps you map, analyze, and optimize your SaaS tools — powered by AI. Cut redundant tools, reduce spend, and make smarter software decisions.
           </p>
           
           {/* Primary CTA */}
