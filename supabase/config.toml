@@ -1,1 +1,4 @@
 project_id = "cowigwginfqahgwzrrql"
+
+[functions.processSuggestions]
+verify_jwt = false
