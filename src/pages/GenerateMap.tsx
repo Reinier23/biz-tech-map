@@ -7,6 +7,7 @@ import { ArrowLeft, Map, Lightbulb, BarChart3, Users, Zap, Package } from "lucid
 import { Link } from "react-router-dom";
 import { useTools } from "@/contexts/ToolsContext";
 import { getCategoryConfig } from "@/lib/categories";
+import { SEO } from "@/components/SEO";
 
 const GenerateMap = () => {
   const { tools } = useTools();
@@ -29,7 +30,13 @@ const GenerateMap = () => {
 
   if (tools.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary flex items-center justify-center">
+      <>
+        <SEO
+          title="Generate Map | Tech Stack Mapper"
+          description="Select views to visualize your tech stack: categories, process flow, and integrations."
+          path="/generate-map"
+        />
+        <main className="min-h-screen bg-gradient-to-br from-background via-background to-secondary flex items-center justify-center" id="main-content">
         <Card className="w-full max-w-md mx-4">
           <CardContent className="pt-6 text-center">
             <Map className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
@@ -42,22 +49,28 @@ const GenerateMap = () => {
             </Link>
           </CardContent>
         </Card>
-      </div>
+        </main>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary">
+    <>
+      <SEO
+        title="Generate Map | Tech Stack Mapper"
+        description="Select views to visualize your tech stack: categories, process flow, and integrations."
+        path="/generate-map"
+      />
+      <main className="min-h-screen bg-gradient-to-br from-background via-background to-secondary" id="main-content">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
+        <header className="mb-8" aria-labelledby="page-title">
           <Link to="/" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-4 transition-colors">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Home
           </Link>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-4xl font-bold text-foreground mb-2">Generate Tech Map</h1>
+              <h1 id="page-title" className="text-4xl font-bold text-foreground mb-2">Generate Tech Map</h1>
               <p className="text-muted-foreground text-lg">
                 Visualize your {tools.length} tools and discover optimization opportunities
               </p>
@@ -71,7 +84,7 @@ const GenerateMap = () => {
               </Link>
             </div>
           </div>
-        </div>
+        </header>
 
         {/* View Selector */}
         <Card className="mb-8">

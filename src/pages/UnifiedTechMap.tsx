@@ -22,6 +22,7 @@ import {
   Edge,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { SEO } from '@/components/SEO';
 
 interface ConsolidationAnalysis {
   tool: {
@@ -248,7 +249,13 @@ const UnifiedTechMap = () => {
   const evaluateCount = analysisResults.filter(a => a.recommendation === "Evaluate").length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary">
+    <>
+      <SEO
+        title="Tech Map | Tech Stack Mapper"
+        description="Visualize and analyze your tools with cards, diagrams, and AI consolidation insights."
+        path="/tech-map"
+      />
+      <main className="min-h-screen bg-gradient-to-br from-background via-background to-secondary" id="main-content">
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <div className="mb-6">
@@ -258,18 +265,17 @@ const UnifiedTechMap = () => {
             <span className="text-foreground font-medium">Step 2: Visualize & Analyze</span>
             <span>→</span>
             <span>Step 3: Take Action</span>
-          </div>
-        </div>
-
-        {/* Header */}
-        <div className="mb-8">
+      </div>
+      </main>
+    </>
+        <header className="mb-8" aria-labelledby="page-title">
           <Link to="/" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-4 transition-colors">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Home
           </Link>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-4xl font-bold text-foreground mb-2">Your Tech Stack</h1>
+              <h1 id="page-title" className="text-4xl font-bold text-foreground mb-2">Your Tech Stack</h1>
               <p className="text-muted-foreground text-lg">
                 {displayTools.length} tools across {Object.values(categorizedTools).filter(cat => cat.length > 0).length} categories
               </p>
@@ -281,7 +287,7 @@ const UnifiedTechMap = () => {
               </Button>
             </div>
           </div>
-        </div>
+        </header>
 
         {/* Tabs Navigation */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

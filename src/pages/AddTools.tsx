@@ -12,6 +12,7 @@ import { ToolSearchBar } from '@/components/ToolSearchBar';
 import { ToolBucket } from '@/components/ToolBucket';
 import { supabase } from '@/integrations/supabase/client';
 import { defaultCategories } from '@/lib/categories';
+import { SEO } from '@/components/SEO';
 
 interface Tool {
   id: string;
@@ -158,19 +159,25 @@ const AddTools = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary">
-      <div className="container mx-auto px-4 py-8">
+    <>
+      <SEO
+        title="Add Tools | Tech Stack Mapper"
+        description="Add your tools to build a modern tech stack map. AI categorizes and enriches automatically."
+        path="/add-tools"
+      />
+      <main className="min-h-screen bg-gradient-to-br from-background via-background to-secondary" id="main-content">
+        <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="mb-8">
+        <header className="mb-8" aria-labelledby="page-title">
           <Link to="/" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-4 transition-colors">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Home
           </Link>
-          <h1 className="text-4xl font-bold text-foreground mb-2">Add Your Tools</h1>
+          <h1 id="page-title" className="text-4xl font-bold text-foreground mb-2">Add Your Tools</h1>
           <p className="text-muted-foreground text-lg">
             Just enter the tool names - AI will handle the rest automatically!
           </p>
-        </div>
+        </header>
 
         {/* Progress Indicator */}
         <ProgressIndicator 
@@ -265,7 +272,8 @@ const AddTools = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+        </main>
+      </>
   );
 };
 

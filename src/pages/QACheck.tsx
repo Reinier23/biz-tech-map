@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
 import { useTools } from '@/contexts/ToolsContext';
 import { supabase } from '@/integrations/supabase/client';
+import { SEO } from '@/components/SEO';
 
 interface QAResult {
   step: string;
@@ -287,7 +288,14 @@ const QACheck = () => {
   const summary = getSummary();
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <>
+      <SEO
+        title="QA Check | Tech Stack Mapper"
+        description="Run automated QA to validate navigation, data input, and API checks."
+        path="/qa-check"
+      />
+      <main id="main-content" role="main">
+      <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">QA Check</h1>
@@ -305,7 +313,7 @@ const QACheck = () => {
       {isRunning && (
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="pt-6">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2" role="status" aria-live="polite">
               <Clock className="w-4 h-4 text-blue-500 animate-spin" />
               <span className="text-blue-700">{currentStep}</span>
             </div>
@@ -382,7 +390,8 @@ const QACheck = () => {
           Go to Add Tools
         </Button>
       </div>
-    </div>
+      </main>
+    </>
   );
 };
 

@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { useTools } from "@/contexts/ToolsContext";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { SEO } from "@/components/SEO";
 
 interface ConsolidationAnalysis {
   tool: {
@@ -101,7 +102,13 @@ const ConsolidationSuggestions = () => {
 
   if (tools.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary flex items-center justify-center">
+      <>
+        <SEO
+          title="Consolidation Suggestions | Tech Stack Mapper"
+          description="Get AI-driven recommendations to replace or evaluate tools and estimate savings."
+          path="/consolidation"
+        />
+        <main className="min-h-screen bg-gradient-to-br from-background via-background to-secondary flex items-center justify-center" id="main-content">
         <Card className="w-full max-w-md mx-4">
           <CardContent className="pt-6 text-center">
             <h2 className="text-2xl font-bold mb-4">No Tools to Analyze</h2>
@@ -113,22 +120,28 @@ const ConsolidationSuggestions = () => {
             </Link>
           </CardContent>
         </Card>
-      </div>
+        </main>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary">
+    <>
+      <SEO
+        title="Consolidation Suggestions | Tech Stack Mapper"
+        description="Get AI-driven recommendations to replace or evaluate tools and estimate savings."
+        path="/consolidation"
+      />
+      <main className="min-h-screen bg-gradient-to-br from-background via-background to-secondary" id="main-content">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
+        <header className="mb-8" aria-labelledby="page-title">
           <Link to="/generate-map" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-4 transition-colors">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Generate Map
           </Link>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-4xl font-bold text-foreground mb-2">AI-Powered Consolidation Analysis</h1>
+              <h1 id="page-title" className="text-4xl font-bold text-foreground mb-2">AI-Powered Consolidation Analysis</h1>
               <p className="text-muted-foreground text-lg">
                 {isLoading ? "Generating consolidation insights..." : `Analysis of ${tools.length} tools against HubSpot capabilities`}
               </p>
@@ -148,13 +161,13 @@ const ConsolidationSuggestions = () => {
               </Button>
             </div>
           </div>
-        </div>
+        </header>
 
         {/* Loading State */}
         {isLoading && (
           <Card className="mb-8">
             <CardContent className="pt-6">
-              <div className="flex items-center justify-center space-x-2">
+              <div className="flex items-center justify-center space-x-2" role="status" aria-live="polite">
                 <RefreshCw className="w-5 h-5 animate-spin" />
                 <p className="text-muted-foreground">Analyzing your software stack for consolidation opportunities... This may take a moment.</p>
               </div>

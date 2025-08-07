@@ -18,6 +18,7 @@ import {
   Edge,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { SEO } from '@/components/SEO';
 
 const TechMap = () => {
   const { tools } = useTools();
@@ -125,17 +126,22 @@ const TechMap = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
+    <>
+      <SEO
+        title="Tech Map | Tech Stack Mapper"
+        description="Visualize your tech stack as cards or a network diagram. Export and explore categories."
+        path="/legacy-tech-map"
+      />
+      <main className="min-h-screen bg-gradient-to-br from-background via-background to-secondary" id="main-content">
+        <div className="container mx-auto px-4 py-8">
+        <header className="mb-8" aria-labelledby="page-title">
           <Link to="/add-tools" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-4 transition-colors">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Add Tools
           </Link>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-4xl font-bold text-foreground mb-2">Your Tech Map</h1>
+              <h1 id="page-title" className="text-4xl font-bold text-foreground mb-2">Your Tech Map</h1>
               <p className="text-muted-foreground text-lg">
                 {displayTools.length} tools across {Object.values(categorizedTools).filter(cat => cat.length > 0).length} categories
               </p>
@@ -156,7 +162,7 @@ const TechMap = () => {
               </Button>
             </div>
           </div>
-        </div>
+        </header>
 
         {/* Content */}
         {isGridView ? (
@@ -250,7 +256,8 @@ const TechMap = () => {
           </Link>
         </div>
       </div>
-    </div>
+      </main>
+    </>
   );
 };
 
