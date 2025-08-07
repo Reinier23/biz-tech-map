@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Sparkles, X, CheckCircle } from 'lucide-react';
+import { Loader2, Sparkles, X, CheckCircle, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { getAllCategories } from '@/lib/categories';
 
@@ -150,18 +150,65 @@ export const SmartToolInput: React.FC<SmartToolInputProps> = ({
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-1 block">
-                    AI Category
-                  </label>
-                  <Badge variant="outline" className="w-fit">
-                    {tool.category}
-                  </Badge>
+              {/* Categorization Feedback */}
+              {tool.category && tool.confidence !== undefined && (
+                <div className="p-3 bg-muted/50 rounded-lg border">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      {tool.confidence >= 80 ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <div className="h-4 w-4 rounded-full border-2 border-orange-500"></div>
+                      )}
+                      <span className="text-sm font-medium">
+                        Categorized as: <span className="text-primary">{tool.category}</span>
+                      </span>
+                    </div>
+                    <Badge variant={tool.confidence >= 80 ? "default" : "secondary"} className="text-xs">
+                      {tool.confidence}% confidence
+                    </Badge>
+                  </div>
+                  
+                  {tool.confidence < 80 && (
+                    <div className="mt-3">
+                      <label className="text-sm font-medium text-foreground mb-2 block">
+                        Override Category
+                      </label>
+                      <Select
+                        value={tool.confirmedCategory || tool.category}
+                        onValueChange={handleCategoryConfirm}
+                      >
+                        <SelectTrigger className="w-full bg-background border-2">
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background border-2 shadow-lg z-50">
+                          {getAllCategories().map((category) => (
+                            <SelectItem 
+                              key={category.id} 
+                              value={category.id} 
+                              className="hover:bg-secondary focus:bg-secondary"
+                            >
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {tool.confirmedCategory && tool.confirmedCategory !== tool.category && (
+                        <div className="flex items-center gap-1 mt-2">
+                          <CheckCircle className="h-3 w-3 text-green-600" />
+                          <span className="text-xs text-green-600">Category overridden</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
+              )}
+
+              {/* High confidence - show final category selection */}
+              {tool.category && tool.confidence !== undefined && tool.confidence >= 80 && (
                 <div>
                   <label className="text-sm font-medium text-foreground mb-2 block">
-                    Confirm Category
+                    Final Category
                   </label>
                   <Select
                     value={tool.confirmedCategory || tool.category}
@@ -183,13 +230,13 @@ export const SmartToolInput: React.FC<SmartToolInputProps> = ({
                     </SelectContent>
                   </Select>
                   {tool.confirmedCategory && tool.confirmedCategory !== tool.category && (
-                    <div className="flex items-center gap-1 mt-1">
+                    <div className="flex items-center gap-1 mt-2">
                       <CheckCircle className="h-3 w-3 text-green-600" />
                       <span className="text-xs text-green-600">Category updated</span>
                     </div>
                   )}
                 </div>
-              </div>
+              )}
 
               <div>
                 <label className="text-sm font-medium text-foreground mb-1 block">
