@@ -27,11 +27,29 @@ serve(async (req) => {
     
 Tool name: "${toolName}"
 
+Classify this business tool into the most appropriate category from the following options:
+
+Categories:
+- Marketing: Advertising, content marketing, SEO, social media management, email marketing
+- Sales: CRM, lead generation, sales automation, prospecting, pipeline management
+- Service: Customer support, help desk, ticketing, customer communication
+- ERP: Enterprise resource planning, business process management, integrated business systems
+- HR: Human resources, payroll, employee management, recruiting, performance management
+- ProjectManagement: Task management, project planning, team collaboration, workflow management
+- Analytics: Data visualization, business intelligence, reporting, data analysis
+- Finance: Accounting, invoicing, financial planning, expense management, bookkeeping
+- CustomerSuccess: Customer retention, onboarding, success management, customer health monitoring
+- Communication: Team chat, video conferencing, internal communication, messaging
+- Development: Code repositories, deployment, developer tools, infrastructure, DevOps
+- Other: Tools that don't clearly fit into the above categories
+
 Return a JSON object with:
-- category: one of "Sales", "Marketing", "Service", "Development", "Analytics", "Communication", "Finance", "HR", "Other"
+- category: the most appropriate category from the list above
 - description: a concise 1-2 sentence description of what the tool does
 - logoUrl: a publicly accessible URL to the tool's logo (prefer SVG or high-quality PNG)
-- confidence: a number from 0-100 indicating how confident you are about this information
+- confidence: a number from 0-100 indicating how confident you are about the categorization
+- reasoning: brief explanation (1 sentence) for why this category was chosen
+- alternativeCategories: array of up to 2 other possible categories if the tool could fit multiple categories
 
 If the tool is not well-known or you're unsure, set confidence to a lower value and provide best-guess information.
 
@@ -40,7 +58,9 @@ Example response:
   "category": "Marketing",
   "description": "A marketing automation platform that helps businesses nurture leads and automate email campaigns.",
   "logoUrl": "https://example.com/logo.png",
-  "confidence": 95
+  "confidence": 95,
+  "reasoning": "Primarily focused on email marketing automation and lead nurturing workflows.",
+  "alternativeCategories": ["Sales", "CustomerSuccess"]
 }`
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
