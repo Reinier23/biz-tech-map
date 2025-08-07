@@ -195,7 +195,7 @@ const AddTools = () => {
                   const Icon = category.icon;
                   const toolCount = getToolCountForCategory(category.id);
                   return (
-                    <TabsTrigger key={category.id} value={category.id} className="flex items-center gap-2">
+                    <TabsTrigger key={category.id} value={category.id} className="flex items-center justify-center gap-2">
                       <Icon className="h-4 w-4" />
                       {category.name}
                       {toolCount > 0 && (
