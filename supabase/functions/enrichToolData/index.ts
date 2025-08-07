@@ -56,50 +56,48 @@ serve(async (req) => {
     console.log(`Found tool: ${tool.name} with domain: ${tool.domain}`);
 
     let logoUrl = null;
-    let description = tool.description; // Keep existing if present
+    let updateNeeded = false;
 
     if (brandfetchClientId && tool.domain) {
       try {
-        // Search for brand using Brandfetch API
-        console.log(`Searching for brand: ${tool.name}`);
+        // Directly construct logo URL using Brandfetch Logo Link (free)
+        const testLogoUrl = `https://cdn.brandfetch.io/${tool.domain}?c=${brandfetchClientId}`;
         
-        const searchResponse = await fetch(`https://api.brandfetch.io/v2/search/${encodeURIComponent(tool.name)}`, {
-          headers: {
-            'Authorization': `Bearer ${brandfetchClientId}`,
-          },
+        console.log(`Testing logo URL: ${testLogoUrl}`);
+        
+        // Test if the logo URL is valid by making a HEAD request
+        const logoResponse = await fetch(testLogoUrl, { 
+          method: 'HEAD',
+          // Add timeout to avoid hanging
+          signal: AbortSignal.timeout(5000)
         });
 
-        if (searchResponse.ok) {
-          const searchData = await searchResponse.json();
-          console.log('Brand search successful:', searchData);
-          
-          if (searchData && searchData.length > 0) {
-            const brand = searchData[0];
-            
-            // Extract domain if available
-            const resolvedDomain = brand.domain || tool.domain;
-            
-            // Construct logo URL using Brandfetch CDN
-            logoUrl = `https://cdn.brandfetch.io/${resolvedDomain}?c=${brandfetchClientId}`;
-            
-            // Use brand description if available and current description is empty
-            if (!description && brand.description) {
-              description = brand.description;
-            }
-            
-            console.log(`Generated logo URL: ${logoUrl}`);
-          } else {
-            console.log('No brand data found from search');
-          }
+        if (logoResponse.ok) {
+          logoUrl = testLogoUrl;
+          updateNeeded = true;
+          console.log(`Valid logo found for domain: ${tool.domain}`);
         } else {
-          console.error('Brandfetch search failed:', await searchResponse.text());
+          console.log(`Logo not found for domain: ${tool.domain} (status: ${logoResponse.status})`);
+          // Try with different logo size parameters as fallback
+          const fallbackLogoUrl = `https://cdn.brandfetch.io/${tool.domain}?c=${brandfetchClientId}&size=512`;
+          
+          const fallbackResponse = await fetch(fallbackLogoUrl, { 
+            method: 'HEAD',
+            signal: AbortSignal.timeout(5000)
+          });
+          
+          if (fallbackResponse.ok) {
+            logoUrl = fallbackLogoUrl;
+            updateNeeded = true;
+            console.log(`Fallback logo found for domain: ${tool.domain}`);
+          }
         }
       } catch (error) {
-        console.error('Error calling Brandfetch API:', error);
-        // Continue without Brandfetch data (fallback)
+        console.error('Error testing logo URL:', error);
+        // Continue without logo (graceful fallback)
       }
     } else {
-      console.log('Brandfetch Client ID not configured or domain missing, skipping enrichment');
+      console.log('Brandfetch Client ID not configured or domain missing, skipping logo enrichment');
     }
 
     // Update tool with enriched data
@@ -107,10 +105,6 @@ serve(async (req) => {
     
     if (logoUrl) {
       updateData.logourl = logoUrl;
-    }
-    
-    if (description && description !== tool.description) {
-      updateData.description = description;
     }
 
     if (Object.keys(updateData).length > 0) {
