@@ -65,8 +65,7 @@ export default {
 				}
 			},
 			fontFamily: {
-				sans: ["Plus Jakarta Sans", "ui-sans-serif", "system-ui", "sans-serif"],
-				display: ["Space Grotesk", "ui-sans-serif", "system-ui", "sans-serif"],
+				sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
