@@ -285,7 +285,8 @@ const GenerateMap = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </main>
+    </>
   );
 };
 

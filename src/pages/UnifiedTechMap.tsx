@@ -265,9 +265,8 @@ const UnifiedTechMap = () => {
             <span className="text-foreground font-medium">Step 2: Visualize & Analyze</span>
             <span>→</span>
             <span>Step 3: Take Action</span>
-      </div>
-      </main>
-    </>
+          </div>
+        </div>
         <header className="mb-8" aria-labelledby="page-title">
           <Link to="/" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-4 transition-colors">
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -589,7 +588,8 @@ const UnifiedTechMap = () => {
           </Button>
         </div>
       </div>
-    </div>
+    </main>
+    </>
   );
 };
 

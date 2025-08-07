@@ -331,7 +331,8 @@ const ConsolidationSuggestions = () => {
           </Button>
         </div>
       </div>
-    </div>
+    </main>
+    </>
   );
 };
 

@@ -390,8 +390,9 @@ const QACheck = () => {
           Go to Add Tools
         </Button>
       </div>
+      </div>
       </main>
-    </>
+      </>
   );
 };
 
