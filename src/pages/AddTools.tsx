@@ -203,7 +203,7 @@ const AddTools = () => {
               {hasValidTools && (
                 <Button
                   onClick={() => navigate('/tech-map')}
-                  className={`gap-2 transition-all animate-fade-in ${enrichedToolsCount >= 3 ? 'animate-pulse' : ''}`}
+                  className="gap-2 transition-all animate-fade-in"
                 >
                   <MapPin className="h-4 w-4" />
                   View Tech Map
