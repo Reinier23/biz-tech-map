@@ -6,7 +6,7 @@ import { CheckCircle, Star, AlertTriangle, Lightbulb, RefreshCw, TrendingDown, B
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import HeroVisual from "@/components/HeroVisual";
+import heroImage from "@/assets/tech-stack-consolidation-hero.jpg";
 
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
@@ -185,7 +185,7 @@ const LandingPage = () => {
             </div>
             <div className="relative">
               <div className="rounded-xl overflow-hidden border bg-card shadow">
-                <HeroVisual />
+                <img src={heroImage} alt="Biz Tech Map dashboard showing stack mapping and consolidation suggestions" loading="lazy" decoding="async" className="w-full h-auto" />
               </div>
             </div>
           </div>
