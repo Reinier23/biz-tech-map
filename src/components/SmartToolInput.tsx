@@ -54,23 +54,44 @@ export const SmartToolInput: React.FC<SmartToolInputProps> = ({
 
       if (data && !data.error) {
         setEnrichedData(data);
-        onUpdate(tool.id, 'category', data.category);
-        onUpdate(tool.id, 'confirmedCategory', data.category); // Set initial confirmed category to AI's guess
+        // Only update category if we don't already have a confirmed category (backward compatibility)
+        if (!tool.confirmedCategory) {
+          onUpdate(tool.id, 'category', data.category);
+          onUpdate(tool.id, 'confirmedCategory', data.category);
+        }
         onUpdate(tool.id, 'description', data.description);
         onUpdate(tool.id, 'logoUrl', data.logoUrl);
         onUpdate(tool.id, 'confidence', data.confidence);
       } else if (data?.fallback) {
         setEnrichedData(data.fallback);
-        onUpdate(tool.id, 'category', data.fallback.category);
-        onUpdate(tool.id, 'confirmedCategory', data.fallback.category); // Set initial confirmed category
+        // Only update category if we don't already have a confirmed category
+        if (!tool.confirmedCategory) {
+          onUpdate(tool.id, 'category', data.fallback.category);
+          onUpdate(tool.id, 'confirmedCategory', data.fallback.category);
+        }
         onUpdate(tool.id, 'description', data.fallback.description);
       }
     } catch (error) {
       console.error('Error enriching tool data:', error);
+      // Fallback to safe defaults on error
+      const fallbackData = {
+        category: tool.category || "Other",
+        description: tool.description || `${toolName} - Please add description manually`,
+        logoUrl: "",
+        confidence: 0
+      };
+      setEnrichedData(fallbackData);
+      // Only set fallback if no category exists
+      if (!tool.category && !tool.confirmedCategory) {
+        onUpdate(tool.id, 'category', "Other");
+        onUpdate(tool.id, 'confirmedCategory', "Other");
+        onUpdate(tool.id, 'description', fallbackData.description);
+        onUpdate(tool.id, 'confidence', 0);
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [tool.id, onUpdate]);
+  }, [tool.id, onUpdate, tool.category, tool.confirmedCategory, tool.description]);
 
   const handleNameChange = useCallback((value: string) => {
     onUpdate(tool.id, 'name', value);
@@ -150,8 +171,8 @@ export const SmartToolInput: React.FC<SmartToolInputProps> = ({
                 </div>
               )}
 
-              {/* Categorization Feedback */}
-              {tool.category && tool.confidence !== undefined && (
+              {/* Categorization Feedback - Show for any tool with category */}
+              {tool.category && (
                 <div className="p-3 bg-muted/50 rounded-lg border">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
@@ -164,12 +185,12 @@ export const SmartToolInput: React.FC<SmartToolInputProps> = ({
                         Categorized as: <span className="text-primary">{tool.category}</span>
                       </span>
                     </div>
-                    <Badge variant={tool.confidence >= 80 ? "default" : "secondary"} className="text-xs">
-                      {tool.confidence}% confidence
+                    <Badge variant={tool.confidence && tool.confidence >= 80 ? "default" : "secondary"} className="text-xs">
+                      {tool.confidence ? `${tool.confidence}% confidence` : 'Manual assignment'}
                     </Badge>
                   </div>
                   
-                  {tool.confidence < 80 && (
+                  {(!tool.confidence || tool.confidence < 80) && (
                     <div className="mt-3">
                       <label className="text-sm font-medium text-foreground mb-2 block">
                         Override Category
@@ -205,7 +226,7 @@ export const SmartToolInput: React.FC<SmartToolInputProps> = ({
               )}
 
               {/* High confidence - show final category selection */}
-              {tool.category && tool.confidence !== undefined && tool.confidence >= 80 && (
+              {tool.category && tool.confidence && tool.confidence >= 80 && (
                 <div>
                   <label className="text-sm font-medium text-foreground mb-2 block">
                     Final Category
