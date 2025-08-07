@@ -1,4 +1,4 @@
-import { Settings, MessageSquare, Database, Package, FileText, DollarSign, Users, Monitor } from 'lucide-react';
+import { Settings, MessageSquare, Database, Package, FileText, DollarSign, Users, Monitor, Building2, Calendar, BarChart3, Heart, MessageCircle, Code } from 'lucide-react';
 
 export interface CategoryDefinition {
   id: string;
@@ -38,12 +38,84 @@ export const defaultCategories: CategoryDefinition[] = [
     color: 'bg-accent',
     textColor: 'text-accent'
   },
+  { 
+    id: 'ERP', 
+    name: 'ERP', 
+    icon: Building2, 
+    description: 'Enterprise resource planning and business process management',
+    examples: ['SAP', 'Oracle NetSuite', 'Microsoft Dynamics'],
+    color: 'bg-primary',
+    textColor: 'text-primary'
+  },
+  { 
+    id: 'HR', 
+    name: 'HR', 
+    icon: Users, 
+    description: 'Human resources, payroll, and employee management',
+    examples: ['BambooHR', 'Workday', 'ADP'],
+    color: 'bg-accent',
+    textColor: 'text-accent'
+  },
+  { 
+    id: 'ProjectManagement', 
+    name: 'Project Management', 
+    icon: Calendar, 
+    description: 'Task management, project planning, and team collaboration',
+    examples: ['Asana', 'Monday.com', 'Trello'],
+    color: 'bg-secondary',
+    textColor: 'text-secondary-foreground'
+  },
+  { 
+    id: 'Analytics', 
+    name: 'Analytics', 
+    icon: BarChart3, 
+    description: 'Data visualization, business intelligence, and reporting',
+    examples: ['Tableau', 'Power BI', 'Looker'],
+    color: 'bg-primary-glow',
+    textColor: 'text-primary-glow'
+  },
+  { 
+    id: 'Finance', 
+    name: 'Finance & Accounting', 
+    icon: DollarSign, 
+    description: 'Accounting, invoicing, and financial management',
+    examples: ['QuickBooks', 'Xero', 'FreshBooks'],
+    color: 'bg-primary',
+    textColor: 'text-primary'
+  },
+  { 
+    id: 'CustomerSuccess', 
+    name: 'Customer Success', 
+    icon: Heart, 
+    description: 'Customer retention, onboarding, and success management',
+    examples: ['Gainsight', 'ChurnZero', 'Totango'],
+    color: 'bg-accent',
+    textColor: 'text-accent'
+  },
+  { 
+    id: 'Communication', 
+    name: 'Communication', 
+    icon: MessageCircle, 
+    description: 'Team chat, video conferencing, and internal communication',
+    examples: ['Slack', 'Microsoft Teams', 'Zoom'],
+    color: 'bg-secondary',
+    textColor: 'text-secondary-foreground'
+  },
+  { 
+    id: 'Development', 
+    name: 'Development', 
+    icon: Code, 
+    description: 'Code repositories, deployment, and developer tools',
+    examples: ['GitHub', 'GitLab', 'Docker'],
+    color: 'bg-primary-glow',
+    textColor: 'text-primary-glow'
+  },
   {
     id: 'Other',
     name: 'Other',
     icon: Package,
-    description: 'DevOps, HR, Finance, and specialized business tools',
-    examples: ['GitHub', 'BambooHR', 'QuickBooks', 'Jira', 'Docker'],
+    description: 'Miscellaneous business tools and specialized software',
+    examples: ['Custom tools', 'Industry-specific software'],
     color: 'bg-secondary',
     textColor: 'text-secondary-foreground'
   }
