@@ -18,16 +18,28 @@ export type Database = {
         Row: {
           id: string
           name: string
+          processed: boolean
+          processed_at: string | null
+          processing_error: string | null
+          resolved_domain: string | null
           submitted_at: string
         }
         Insert: {
           id?: string
           name: string
+          processed?: boolean
+          processed_at?: string | null
+          processing_error?: string | null
+          resolved_domain?: string | null
           submitted_at?: string
         }
         Update: {
           id?: string
           name?: string
+          processed?: boolean
+          processed_at?: string | null
+          processing_error?: string | null
+          resolved_domain?: string | null
           submitted_at?: string
         }
         Relationships: []
