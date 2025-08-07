@@ -172,7 +172,7 @@ const LandingPage = () => {
           <div className="grid lg:grid-cols-2 items-center gap-12">
             <div className="text-center lg:text-left space-y-8 max-w-xl mx-auto lg:mx-0">
               <p className="text-sm font-medium tracking-widest uppercase text-primary">AI-powered tech mapping</p>
-              <h1 className="text-4xl lg:text-6xl font-bold text-foreground leading-tight font-playfair">
+              <h1 className="text-4xl lg:text-6xl font-bold text-foreground leading-tight font-display">
                 See your entire tech stack, then cut costs with confidence
               </h1>
               <p className="text-lg lg:text-xl text-muted-foreground leading-relaxed">

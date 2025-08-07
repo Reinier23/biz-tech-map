@@ -65,8 +65,8 @@ export default {
 				}
 			},
 			fontFamily: {
-				playfair: ["Playfair Display", "serif"],
-				inter: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"]
+				sans: ["Plus Jakarta Sans", "ui-sans-serif", "system-ui", "sans-serif"],
+				display: ["Space Grotesk", "ui-sans-serif", "system-ui", "sans-serif"],
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
