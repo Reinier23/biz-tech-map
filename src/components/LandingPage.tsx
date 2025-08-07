@@ -4,19 +4,57 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { CheckCircle, Star, AlertTriangle, Lightbulb, RefreshCw, TrendingDown, BarChart3, Brain, Zap, Mail, Gauge, Globe, HelpCircle } from "lucide-react";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import heroImage from "@/assets/tech-stack-consolidation-hero.jpg";
 
 const LandingPage = () => {
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
-      // TODO: Integrate with waitlist backend
-      console.log("Email submitted to waitlist:", email);
-      setIsSubmitted(true);
+    if (!email) return;
+
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from('waitlist')
+        .insert([{ 
+          email: email.toLowerCase().trim(),
+          source: 'landing_page'
+        }]);
+
+      if (error) {
+        if (error.code === '23505') { // Unique constraint violation
+          toast({
+            title: "Already signed up!",
+            description: "This email is already on our waitlist. We'll be in touch soon!",
+          });
+        } else {
+          throw error;
+        }
+      } else {
+        toast({
+          title: "Welcome to the waitlist!",
+          description: "Thanks for signing up. We'll notify you when early access is available.",
+        });
+        setIsSubmitted(true);
+      }
+      
       setEmail("");
+    } catch (error) {
+      console.error('Error submitting email:', error);
+      toast({
+        title: "Something went wrong",
+        description: "Please try again later or contact hello@biztechmap.com",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -82,8 +120,12 @@ const LandingPage = () => {
         required
         className={`flex-1 ${size === "large" ? "h-12 text-lg" : ""}`}
       />
-      <Button type="submit" className={`${size === "large" ? "h-12 px-8 text-lg" : "px-6"} bg-primary hover:bg-primary/90 text-primary-foreground font-semibold`}>
-        {isSubmitted ? "Thanks!" : label}
+      <Button 
+        type="submit" 
+        disabled={isLoading}
+        className={`${size === "large" ? "h-12 px-8 text-lg" : "px-6"} bg-primary hover:bg-primary/90 text-primary-foreground font-semibold`}
+      >
+        {isLoading ? "Joining..." : isSubmitted ? "Thanks!" : label}
       </Button>
     </form>
   );
