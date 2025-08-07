@@ -190,7 +190,7 @@ const AddTools = () => {
           </CardHeader>
           <CardContent>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className={`grid w-full grid-cols-${categories.length}`}>
+              <TabsList className="grid w-full grid-cols-4 lg:grid-cols-4">
                 {categories.map((category) => {
                   const Icon = category.icon;
                   const toolCount = getToolCountForCategory(category.id);
