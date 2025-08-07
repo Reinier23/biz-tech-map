@@ -190,7 +190,6 @@ const LandingPage = () => {
             </div>
           </div>
         </section>
-      </div>
 
       {/* Logo Section */}
       <section id="integrations" className="border-t border-b bg-muted/30 py-12">
