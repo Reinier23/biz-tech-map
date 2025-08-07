@@ -39,6 +39,15 @@ const AddTools = () => {
   const [emailCaptured, setEmailCaptured] = useState(false);
   const navigate = useNavigate();
 
+  // Debug logging to verify correct components are rendering
+  console.log('✅ AddTools: New UI components active', {
+    toolsCount: tools.length,
+    contextToolsCount: contextTools.length,
+    showSuggestions,
+    showEmailCapture,
+    timestamp: new Date().toISOString()
+  });
+
   // Load tools from context on mount
   useEffect(() => {
     if (contextTools.length > 0) {
@@ -70,7 +79,8 @@ const AddTools = () => {
         return data.fallback;
       }
     } catch (error) {
-      console.error('Error enriching tool data:', error);
+      console.error('❌ Tool enrichment failed:', error);
+      // Still add the tool without enrichment
     }
     return null;
   }, []);
@@ -97,8 +107,10 @@ const AddTools = () => {
     setTools(prev => [...prev, newTool]);
 
     // Enrich tool data in background
+    console.log(`🔄 Enriching tool: ${toolName}`);
     const enrichedData = await enrichToolData(toolName);
     if (enrichedData) {
+      console.log(`✅ Tool enriched successfully:`, enrichedData);
       setTools(prev => prev.map(tool => 
         tool.id === newTool.id 
           ? {

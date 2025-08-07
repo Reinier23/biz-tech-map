@@ -14,17 +14,19 @@ serve(async (req) => {
   }
 
   try {
-    const { toolId } = await req.json();
+    const { toolName } = await req.json();
     
-    if (!toolId) {
+    if (!toolName) {
       return new Response(
-        JSON.stringify({ error: 'toolId is required' }),
+        JSON.stringify({ error: 'toolName is required' }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
     }
+
+    console.log(`Enriching tool data for: ${toolName}`);
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -33,120 +35,122 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log(`Enriching tool data for toolId: ${toolId}`);
-
-    // Fetch tool from database
-    const { data: tool, error: fetchError } = await supabase
+    // Check if tool exists in catalog
+    const { data: existingTool } = await supabase
       .from('tools_catalog')
       .select('*')
-      .eq('id', toolId)
+      .ilike('name', toolName)
+      .limit(1)
       .single();
 
-    if (fetchError || !tool) {
-      console.error('Tool not found:', fetchError);
+    if (existingTool) {
+      console.log(`Found existing tool in catalog: ${existingTool.name}`);
       return new Response(
-        JSON.stringify({ error: 'Tool not found' }),
+        JSON.stringify({
+          category: existingTool.category || 'Other',
+          description: existingTool.description || `${toolName} - Business tool`,
+          logoUrl: existingTool.logourl || '',
+          confidence: 95
+        }),
         { 
-          status: 404, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
     }
 
-    console.log(`Found tool: ${tool.name} with domain: ${tool.domain}`);
+    // AI categorization logic
+    const categories = {
+      'Marketing': ['marketing', 'analytics', 'seo', 'social', 'content', 'email', 'campaign', 'ads', 'advertising'],
+      'Sales': ['sales', 'crm', 'lead', 'pipeline', 'customer', 'prospect', 'revenue'],
+      'Service': ['support', 'help', 'ticket', 'chat', 'communication', 'slack', 'teams'],
+      'Development': ['dev', 'code', 'git', 'github', 'api', 'database', 'programming'],
+      'Design': ['design', 'figma', 'adobe', 'creative', 'ui', 'ux', 'graphics'],
+      'Finance': ['finance', 'accounting', 'billing', 'payment', 'invoice', 'money'],
+      'HR': ['hr', 'human', 'employee', 'hiring', 'recruitment', 'people'],
+      'Operations': ['operations', 'project', 'task', 'workflow', 'automation', 'process']
+    };
 
-    let logoUrl = null;
-    let updateNeeded = false;
+    const toolNameLower = toolName.toLowerCase();
+    let category = 'Other';
+    let confidence = 60;
 
-    if (brandfetchClientId && tool.domain) {
+    // Simple keyword matching for categorization
+    for (const [cat, keywords] of Object.entries(categories)) {
+      if (keywords.some(keyword => toolNameLower.includes(keyword))) {
+        category = cat;
+        confidence = 85;
+        break;
+      }
+    }
+
+    // Try to get logo if Brandfetch is configured
+    let logoUrl = '';
+    if (brandfetchClientId) {
       try {
-        // Directly construct logo URL using Brandfetch Logo Link (free)
-        const testLogoUrl = `https://cdn.brandfetch.io/${tool.domain}?c=${brandfetchClientId}`;
+        // Extract domain from tool name (basic heuristic)
+        const domain = toolNameLower.replace(/\s+/g, '') + '.com';
+        const testLogoUrl = `https://cdn.brandfetch.io/${domain}?c=${brandfetchClientId}`;
         
-        console.log(`Testing logo URL: ${testLogoUrl}`);
-        
-        // Test if the logo URL is valid by making a HEAD request
         const logoResponse = await fetch(testLogoUrl, { 
           method: 'HEAD',
-          // Add timeout to avoid hanging
-          signal: AbortSignal.timeout(5000)
+          signal: AbortSignal.timeout(3000)
         });
 
         if (logoResponse.ok) {
           logoUrl = testLogoUrl;
-          updateNeeded = true;
-          console.log(`Valid logo found for domain: ${tool.domain}`);
-        } else {
-          console.log(`Logo not found for domain: ${tool.domain} (status: ${logoResponse.status})`);
-          // Try with different logo size parameters as fallback
-          const fallbackLogoUrl = `https://cdn.brandfetch.io/${tool.domain}?c=${brandfetchClientId}&size=512`;
-          
-          const fallbackResponse = await fetch(fallbackLogoUrl, { 
-            method: 'HEAD',
-            signal: AbortSignal.timeout(5000)
-          });
-          
-          if (fallbackResponse.ok) {
-            logoUrl = fallbackLogoUrl;
-            updateNeeded = true;
-            console.log(`Fallback logo found for domain: ${tool.domain}`);
-          }
+          confidence = Math.min(confidence + 10, 95);
         }
       } catch (error) {
-        console.error('Error testing logo URL:', error);
-        // Continue without logo (graceful fallback)
+        console.log('Logo fetch failed, continuing without logo');
       }
-    } else {
-      console.log('Brandfetch Client ID not configured or domain missing, skipping logo enrichment');
     }
 
-    // Update tool with enriched data
-    const updateData: any = {};
-    
-    if (logoUrl) {
-      updateData.logourl = logoUrl;
-    }
+    const enrichedData = {
+      category,
+      description: `${toolName} - ${category} tool for business operations`,
+      logoUrl,
+      confidence
+    };
 
-    if (Object.keys(updateData).length > 0) {
-      const { error: updateError } = await supabase
+    // Save to catalog for future use
+    try {
+      await supabase
         .from('tools_catalog')
-        .update(updateData)
-        .eq('id', toolId);
-
-      if (updateError) {
-        console.error('Error updating tool:', updateError);
-        return new Response(
-          JSON.stringify({ error: 'Failed to update tool' }),
-          { 
-            status: 500, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
-      }
-
-      console.log(`Successfully updated tool ${toolId} with:`, updateData);
-    } else {
-      console.log('No new data to update');
+        .insert({
+          name: toolName,
+          category,
+          description: enrichedData.description,
+          logourl: logoUrl,
+          domain: toolNameLower.replace(/\s+/g, '') + '.com'
+        });
+    } catch (error) {
+      console.log('Failed to save to catalog (may already exist):', error.message);
     }
+
+    console.log(`Successfully enriched ${toolName}:`, enrichedData);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        toolId,
-        enriched: Object.keys(updateData).length > 0,
-        updates: updateData
-      }),
+      JSON.stringify(enrichedData),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
 
   } catch (error) {
-    console.error('Error in enrich-tool function:', error);
+    console.error('Error in enrichToolData function:', error);
+    
+    // Return fallback data instead of error
+    const fallbackData = {
+      category: 'Other',
+      description: 'Business tool',
+      logoUrl: '',
+      confidence: 50,
+      fallback: true
+    };
+
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ fallback: fallbackData }),
       { 
-        status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
