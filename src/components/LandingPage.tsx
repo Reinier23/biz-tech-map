@@ -65,7 +65,7 @@ const LandingPage = () => {
     { icon: RefreshCw, text: "Detect redundant or overlapping tools" },
     { icon: TrendingDown, text: "Identify cost-saving opportunities automatically" },
     { icon: BarChart3, text: "Understand how tools are connected — and where gaps exist" },
-    { icon: Brain, text: "Get GPT-powered suggestions to consolidate or improve" }
+    { icon: Brain, text: "Get AI-powered suggestions to consolidate or improve" }
   ];
 
   const steps = [
