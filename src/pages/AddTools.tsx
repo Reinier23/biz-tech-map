@@ -26,6 +26,7 @@ interface Tool {
 
 interface EnrichedData {
   category: string;
+  confirmedCategory?: string;
   description: string;
   logoUrl: string;
   confidence: number;
@@ -64,27 +65,27 @@ const AddTools = () => {
     }
   }, [tools, setContextTools]);
 
-  const enrichToolData = useCallback(async (toolName: string): Promise<EnrichedData | null> => {
-    if (!toolName.trim() || toolName.length < 2) return null;
+const enrichToolData = useCallback(async (toolName: string, suggestedCategory?: string): Promise<EnrichedData | null> => {
+  if (!toolName.trim() || toolName.length < 2) return null;
 
-    try {
-      const { data, error } = await supabase.functions.invoke('enrichToolData', {
-        body: { toolName: toolName.trim() }
-      });
+  try {
+    const { data, error } = await supabase.functions.invoke('enrichToolData', {
+      body: { toolName: toolName.trim(), suggestedCategory }
+    });
 
-      if (error) throw error;
+    if (error) throw error;
 
-      if (data && !data.error) {
-        return data;
-      } else if (data?.fallback) {
-        return data.fallback;
-      }
-    } catch (error) {
-      console.error('❌ Tool enrichment failed:', error);
-      // Still add the tool without enrichment
+    if (data && !data.error) {
+      return data;
+    } else if (data?.fallback) {
+      return data.fallback;
     }
-    return null;
-  }, []);
+  } catch (error) {
+    console.error('❌ Tool enrichment failed:', error);
+    // Still add the tool without enrichment
+  }
+  return null;
+}, []);
 
   const handleAddTool = useCallback(async (toolName: string, suggestedCategory?: string) => {
     // Check if tool already exists
@@ -107,24 +108,24 @@ const AddTools = () => {
     // Add tool immediately to show in UI
     setTools(prev => [...prev, newTool]);
 
-    // Enrich tool data in background
-    console.log(`🔄 Enriching tool: ${toolName}`);
-    const enrichedData = await enrichToolData(toolName);
-    if (enrichedData) {
-      console.log(`✅ Tool enriched successfully:`, enrichedData);
-      setTools(prev => prev.map(tool => 
-        tool.id === newTool.id 
-          ? {
-              ...tool,
-              category: enrichedData.category,
-              confirmedCategory: enrichedData.category,
-              description: enrichedData.description,
-              logoUrl: enrichedData.logoUrl,
-              confidence: enrichedData.confidence
-            }
-          : tool
-      ));
-    }
+// Enrich tool data in background
+console.log(`🔄 Enriching tool: ${toolName}`);
+const enrichedData = await enrichToolData(toolName, suggestedCategory);
+if (enrichedData) {
+  console.log(`✅ Tool enriched successfully:`, enrichedData);
+  setTools(prev => prev.map(tool => 
+    tool.id === newTool.id 
+      ? {
+          ...tool,
+          category: enrichedData.category,
+          confirmedCategory: enrichedData.confirmedCategory,
+          description: enrichedData.description,
+          logoUrl: enrichedData.logoUrl,
+          confidence: enrichedData.confidence
+        }
+      : tool
+  ));
+}
   }, [tools, enrichToolData]);
 
   const handleRemoveTool = useCallback((id: string) => {

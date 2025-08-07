@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    const { toolName } = await req.json();
+    const { toolName, suggestedCategory } = await req.json();
     
     if (!toolName) {
       return new Response(
@@ -45,13 +45,36 @@ serve(async (req) => {
 
     if (existingTool) {
       console.log(`Found existing tool in catalog: ${existingTool.name}`);
+      const aiCategory = existingTool.category || 'Other';
+      const aiConfidence = 95;
+      const LOW = 70;
+      const HIGH = 80;
+
+      let finalCategory = aiCategory;
+      let usedSuggested = false;
+
+      if (suggestedCategory) {
+        if (aiCategory === 'Other' || aiConfidence < LOW) {
+          finalCategory = suggestedCategory;
+          usedSuggested = true;
+        } else if (aiConfidence >= HIGH && aiCategory.toLowerCase() !== suggestedCategory.toLowerCase()) {
+          finalCategory = aiCategory;
+        } else {
+          finalCategory = suggestedCategory;
+          usedSuggested = true;
+        }
+      }
+
+      const responsePayload = {
+        category: finalCategory,
+        confirmedCategory: usedSuggested ? finalCategory : undefined,
+        description: existingTool.description || `${toolName} - Business tool`,
+        logoUrl: existingTool.logourl || '',
+        confidence: aiConfidence
+      };
+
       return new Response(
-        JSON.stringify({
-          category: existingTool.category || 'Other',
-          description: existingTool.description || `${toolName} - Business tool`,
-          logoUrl: existingTool.logourl || '',
-          confidence: 95
-        }),
+        JSON.stringify(responsePayload),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
@@ -105,9 +128,28 @@ serve(async (req) => {
       }
     }
 
+    const LOW = 70;
+    const HIGH = 80;
+
+    let finalCategory = category;
+    let usedSuggested = false;
+
+    if (suggestedCategory) {
+      if (category === 'Other' || confidence < LOW) {
+        finalCategory = suggestedCategory;
+        usedSuggested = true;
+      } else if (confidence >= HIGH && category.toLowerCase() !== suggestedCategory.toLowerCase()) {
+        finalCategory = category;
+      } else {
+        finalCategory = suggestedCategory;
+        usedSuggested = true;
+      }
+    }
+
     const enrichedData = {
-      category,
-      description: `${toolName} - ${category} tool for business operations`,
+      category: finalCategory,
+      confirmedCategory: usedSuggested ? finalCategory : undefined,
+      description: `${toolName} - ${finalCategory} tool for business operations`,
       logoUrl,
       confidence
     };
@@ -118,13 +160,13 @@ serve(async (req) => {
         .from('tools_catalog')
         .insert({
           name: toolName,
-          category,
+          category: finalCategory,
           description: enrichedData.description,
           logourl: logoUrl,
           domain: toolNameLower.replace(/\s+/g, '') + '.com'
         });
     } catch (error) {
-      console.log('Failed to save to catalog (may already exist):', error.message);
+      console.log('Failed to save to catalog (may already exist):', (error as any).message);
     }
 
     console.log(`Successfully enriched ${toolName}:`, enrichedData);
@@ -141,7 +183,8 @@ serve(async (req) => {
     
     // Return fallback data instead of error
     const fallbackData = {
-      category: 'Other',
+      category: suggestedCategory || 'Other',
+      confirmedCategory: suggestedCategory ? suggestedCategory : undefined,
       description: 'Business tool',
       logoUrl: '',
       confidence: 50,

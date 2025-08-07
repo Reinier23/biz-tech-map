@@ -2,3 +2,6 @@ project_id = "cowigwginfqahgwzrrql"
 
 [functions.processSuggestions]
 verify_jwt = false
+
+[functions.enrichToolData]
+verify_jwt = false
