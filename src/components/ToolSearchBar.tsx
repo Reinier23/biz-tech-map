@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+
 import { Search, Plus, Sparkles, Building, Lightbulb } from 'lucide-react';
 import { getToolSuggestions, ToolSuggestion } from '@/lib/toolSuggestions';
 import { getCategoryConfig } from '@/lib/categories';
@@ -21,40 +21,28 @@ export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existin
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [useApiSearch, setUseApiSearch] = useState(true);
+  
   const [showSuggestionDialog, setShowSuggestionDialog] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Fetch suggestions from API or fallback to local search
   const fetchSuggestions = useCallback(async (searchQuery: string) => {
-    if (!useApiSearch) {
-      // Fallback to local search
-      const newSuggestions = getToolSuggestions(searchQuery, 8);
-      const filteredSuggestions = newSuggestions.filter(suggestion => 
-        !existingTools.some(tool => 
-          tool.name.toLowerCase() === suggestion.name.toLowerCase()
-        )
-      );
-      setSuggestions(filteredSuggestions);
-      return;
-    }
-
     try {
       setIsLoading(true);
-      const { data, error } = await supabase.functions.invoke('search-tools', {
-        body: JSON.stringify({ 
-          query: searchQuery,
-          limit: 10 
-        })
-      });
+
+      const qs = new URLSearchParams({
+        q: searchQuery || '',
+        limit: '10',
+      }).toString();
+
+      const { data, error } = await supabase.functions.invoke(`search-tools?${qs}`);
 
       if (error) {
-        console.warn('API search failed, falling back to local search:', error);
-        setUseApiSearch(false);
+        console.warn('API search failed, using local fallback:', error);
         const newSuggestions = getToolSuggestions(searchQuery, 8);
-        const filteredSuggestions = newSuggestions.filter(suggestion => 
-          !existingTools.some(tool => 
+        const filteredSuggestions = newSuggestions.filter(suggestion =>
+          !existingTools.some(tool =>
             tool.name.toLowerCase() === suggestion.name.toLowerCase()
           )
         );
@@ -62,19 +50,18 @@ export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existin
         return;
       }
 
-      // Filter out already added tools
-      const filteredSuggestions = (data?.tools || []).filter((suggestion: ToolSuggestion) => 
-        !existingTools.some(tool => 
+      const apiSuggestions = (data?.tools || []) as ToolSuggestion[];
+      const filteredSuggestions = apiSuggestions.filter((suggestion: ToolSuggestion) =>
+        !existingTools.some(tool =>
           tool.name.toLowerCase() === suggestion.name.toLowerCase()
         )
       );
       setSuggestions(filteredSuggestions);
     } catch (error) {
-      console.warn('API search error, falling back to local search:', error);
-      setUseApiSearch(false);
+      console.warn('API search error, using local fallback:', error);
       const newSuggestions = getToolSuggestions(searchQuery, 8);
-      const filteredSuggestions = newSuggestions.filter(suggestion => 
-        !existingTools.some(tool => 
+      const filteredSuggestions = newSuggestions.filter(suggestion =>
+        !existingTools.some(tool =>
           tool.name.toLowerCase() === suggestion.name.toLowerCase()
         )
       );
@@ -82,7 +69,7 @@ export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existin
     } finally {
       setIsLoading(false);
     }
-  }, [useApiSearch, existingTools]);
+  }, [existingTools]);
 
   // Update suggestions when query changes
   useEffect(() => {
@@ -244,6 +231,7 @@ export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existin
                           return (
                             <CommandItem
                               key={suggestion.id}
+                              value={suggestion.name}
                               className={`cursor-pointer p-3 ${
                                 globalIndex === selectedIndex ? 'bg-accent' : ''
                               }`}
@@ -251,16 +239,18 @@ export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existin
                             >
                               <div className="flex items-center justify-between w-full">
                                 <div className="flex items-center space-x-3">
-                                  <Avatar className="h-8 w-8 border">
-                                    <AvatarImage 
-                                      src={suggestion.logoUrl} 
+                                  {suggestion.logoUrl ? (
+                                    <img
+                                      src={suggestion.logoUrl}
                                       alt={`${suggestion.name} logo`}
-                                      className="object-contain p-1"
+                                      className="h-8 w-8 rounded border object-contain p-1"
+                                      loading="lazy"
                                     />
-                                    <AvatarFallback className="text-xs bg-muted">
+                                  ) : (
+                                    <div className="h-8 w-8 rounded border flex items-center justify-center text-muted-foreground">
                                       <Building className="h-4 w-4" />
-                                    </AvatarFallback>
-                                  </Avatar>
+                                    </div>
+                                  )}
                                   <div className="space-y-1">
                                     <div className="font-medium">
                                       {highlightMatch(suggestion.name, query)}
