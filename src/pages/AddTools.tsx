@@ -7,6 +7,9 @@ import { Plus, ArrowRight, Lightbulb, Sparkles, ArrowLeft, MapPin } from 'lucide
 import { useNavigate, Link } from 'react-router-dom';
 import { useTools } from '@/contexts/ToolsContext';
 import { SmartToolInput } from '@/components/SmartToolInput';
+import { ProgressIndicator } from '@/components/ProgressIndicator';
+import { AISuggestionsPanel } from '@/components/AISuggestionsPanel';
+import { EmailCaptureSection } from '@/components/EmailCaptureSection';
 import { defaultCategories } from '@/lib/categories';
 
 interface Tool {
@@ -39,6 +42,9 @@ const AddTools = () => {
     }, {} as Record<string, Tool[]>);
   });
   const [activeTab, setActiveTab] = useState('Marketing');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showEmailCapture, setShowEmailCapture] = useState(false);
+  const [emailCaptured, setEmailCaptured] = useState(false);
   const navigate = useNavigate();
 
   // Load tools from context on mount only
@@ -161,6 +167,26 @@ const AddTools = () => {
   };
 
   const hasValidTools = getAllValidTools().length > 0;
+  const enrichedToolsCount = getAllValidTools().filter(tool => tool.confidence && tool.confidence > 70).length;
+  const currentStep = hasValidTools ? (enrichedToolsCount >= 3 ? 2 : 1) : 1;
+
+  // Show suggestions when we have 3+ enriched tools
+  useEffect(() => {
+    if (enrichedToolsCount >= 3 && !showSuggestions) {
+      setTimeout(() => setShowSuggestions(true), 500);
+    }
+  }, [enrichedToolsCount, showSuggestions]);
+
+  // Show email capture after suggestions are shown
+  useEffect(() => {
+    if (showSuggestions && !showEmailCapture) {
+      setTimeout(() => setShowEmailCapture(true), 2000);
+    }
+  }, [showSuggestions, showEmailCapture]);
+
+  const handleEmailCaptured = (email: string) => {
+    setEmailCaptured(true);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary">
@@ -176,6 +202,13 @@ const AddTools = () => {
             Just enter the tool names - AI will handle the rest automatically!
           </p>
         </div>
+
+        {/* Progress Indicator */}
+        <ProgressIndicator 
+          currentStep={currentStep}
+          totalSteps={2}
+          stepLabels={['Add Tools', 'Get Insights']}
+        />
 
         {/* Tools Input Card */}
         <Card className="shadow-xl">
@@ -259,18 +292,39 @@ const AddTools = () => {
                   {getAllValidTools().length} tools added across all categories
                 </p>
               </div>
-              <Button
-                onClick={() => navigate('/tech-map')}
-                disabled={!hasValidTools}
-                className="gap-2"
-              >
-                <MapPin className="h-4 w-4" />
-                View Tech Map
-                <ArrowRight className="h-4 w-4" />
-              </Button>
+              {hasValidTools && (
+                <Button
+                  onClick={() => navigate('/tech-map')}
+                  className={`gap-2 transition-all ${enrichedToolsCount >= 3 ? 'animate-pulse' : ''}`}
+                >
+                  <MapPin className="h-4 w-4" />
+                  View Tech Map
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
+
+        {/* AI Suggestions Panel */}
+        {showSuggestions && (
+          <div className="mt-8">
+            <AISuggestionsPanel 
+              tools={getAllValidTools()}
+              isVisible={showSuggestions}
+            />
+          </div>
+        )}
+
+        {/* Email Capture Section */}
+        {showEmailCapture && (
+          <div className="mt-8">
+            <EmailCaptureSection 
+              isVisible={showEmailCapture}
+              onEmailCaptured={handleEmailCaptured}
+            />
+          </div>
+        )}
 
         {/* Quick Tips */}
         <Card className="mt-8 bg-gradient-to-r from-primary/5 to-primary-glow/5 border-primary/20">
