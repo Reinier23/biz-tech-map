@@ -1,159 +1,160 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { toolName } = await req.json()
-
-    if (!toolName) {
-      throw new Error('Tool name is required')
-    }
-
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
-    if (!openaiApiKey) {
-      throw new Error('OpenAI API key not configured')
-    }
-
-    const prompt = `You are a tech tool expert. Given a tool name, provide structured information about it.
+    const { toolId } = await req.json();
     
-Tool name: "${toolName}"
+    if (!toolId) {
+      return new Response(
+        JSON.stringify({ error: 'toolId is required' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
 
-Classify this business tool into the most appropriate category from the following options:
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const brandfetchClientId = Deno.env.get('BRANDFETCH_CLIENT_ID');
+    
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-Categories:
-- Marketing: Advertising, content marketing, SEO, social media management, email marketing
-- Sales: CRM, lead generation, sales automation, prospecting, pipeline management
-- Service: Customer support, help desk, ticketing, customer communication
-- ERP: Enterprise resource planning, business process management, integrated business systems
-- HR: Human resources, payroll, employee management, recruiting, performance management
-- ProjectManagement: Task management, project planning, team collaboration, workflow management
-- Analytics: Data visualization, business intelligence, reporting, data analysis
-- Finance: Accounting, invoicing, financial planning, expense management, bookkeeping
-- CustomerSuccess: Customer retention, onboarding, success management, customer health monitoring
-- Communication: Team chat, video conferencing, internal communication, messaging
-- Development: Code repositories, deployment, developer tools, infrastructure, DevOps
-- Other: Tools that don't clearly fit into the above categories
+    console.log(`Enriching tool data for toolId: ${toolId}`);
 
-CONFIDENCE GUIDELINES:
-- Use confidence 80-100 only when you are very certain about the categorization
-- Use confidence 60-79 for tools you recognize but aren't completely sure about
-- Use confidence 0-59 for unknown tools or when uncertain
-- Be conservative - it's better to have low confidence than incorrectly categorize
+    // Fetch tool from database
+    const { data: tool, error: fetchError } = await supabase
+      .from('tools_catalog')
+      .select('*')
+      .eq('id', toolId)
+      .single();
 
-Return a JSON object with:
-- category: the most appropriate category from the list above
-- description: a concise 1-2 sentence description of what the tool does
-- logoUrl: a publicly accessible URL to the tool's logo (prefer SVG or high-quality PNG)
-- confidence: a number from 0-100 indicating how confident you are about the categorization
-- reasoning: brief explanation (1 sentence) for why this category was chosen
-- alternativeCategories: array of up to 2 other possible categories if the tool could fit multiple categories
+    if (fetchError || !tool) {
+      console.error('Tool not found:', fetchError);
+      return new Response(
+        JSON.stringify({ error: 'Tool not found' }),
+        { 
+          status: 404, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
 
-If the tool is not well-known or you're unsure, set confidence to a lower value and provide best-guess information.
+    console.log(`Found tool: ${tool.name} with domain: ${tool.domain}`);
 
-Example response:
-{
-  "category": "Marketing",
-  "description": "A marketing automation platform that helps businesses nurture leads and automate email campaigns.",
-  "logoUrl": "https://example.com/logo.png",
-  "confidence": 95,
-  "reasoning": "Primarily focused on email marketing automation and lead nurturing workflows.",
-  "alternativeCategories": ["Sales", "CustomerSuccess"]
-}`
+    let logoUrl = null;
+    let description = tool.description; // Keep existing if present
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'user',
-            content: prompt
+    if (brandfetchClientId && tool.domain) {
+      try {
+        // Search for brand using Brandfetch API
+        console.log(`Searching for brand: ${tool.name}`);
+        
+        const searchResponse = await fetch(`https://api.brandfetch.io/v2/search/${encodeURIComponent(tool.name)}`, {
+          headers: {
+            'Authorization': `Bearer ${brandfetchClientId}`,
+          },
+        });
+
+        if (searchResponse.ok) {
+          const searchData = await searchResponse.json();
+          console.log('Brand search successful:', searchData);
+          
+          if (searchData && searchData.length > 0) {
+            const brand = searchData[0];
+            
+            // Extract domain if available
+            const resolvedDomain = brand.domain || tool.domain;
+            
+            // Construct logo URL using Brandfetch CDN
+            logoUrl = `https://cdn.brandfetch.io/${resolvedDomain}?c=${brandfetchClientId}`;
+            
+            // Use brand description if available and current description is empty
+            if (!description && brand.description) {
+              description = brand.description;
+            }
+            
+            console.log(`Generated logo URL: ${logoUrl}`);
+          } else {
+            console.log('No brand data found from search');
           }
-        ],
-        temperature: 0.3,
-        max_tokens: 500
-      }),
-    })
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`)
+        } else {
+          console.error('Brandfetch search failed:', await searchResponse.text());
+        }
+      } catch (error) {
+        console.error('Error calling Brandfetch API:', error);
+        // Continue without Brandfetch data (fallback)
+      }
+    } else {
+      console.log('Brandfetch Client ID not configured or domain missing, skipping enrichment');
     }
 
-    const data = await response.json()
-    const content = data.choices[0]?.message?.content
-
-    if (!content) {
-      throw new Error('No response from OpenAI')
+    // Update tool with enriched data
+    const updateData: any = {};
+    
+    if (logoUrl) {
+      updateData.logourl = logoUrl;
+    }
+    
+    if (description && description !== tool.description) {
+      updateData.description = description;
     }
 
-    // Parse the JSON response from OpenAI
-    let enrichedData
-    try {
-      enrichedData = JSON.parse(content)
-      
-      // Apply confidence-based auto-assignment logic
-      if (enrichedData.confidence < 80) {
-        // Low confidence: force to "Other" category for manual override
-        enrichedData.category = "Other"
+    if (Object.keys(updateData).length > 0) {
+      const { error: updateError } = await supabase
+        .from('tools_catalog')
+        .update(updateData)
+        .eq('id', toolId);
+
+      if (updateError) {
+        console.error('Error updating tool:', updateError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to update tool' }),
+          { 
+            status: 500, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
       }
-      
-    } catch (parseError) {
-      console.error('JSON parsing failed:', parseError)
-      // Fallback if JSON parsing fails
-      enrichedData = {
-        category: "Other",
-        description: `${toolName} - Unable to fetch detailed information`,
-        logoUrl: "",
-        confidence: 0,
-        reasoning: "Failed to parse AI response",
-        alternativeCategories: []
-      }
+
+      console.log(`Successfully updated tool ${toolId} with:`, updateData);
+    } else {
+      console.log('No new data to update');
     }
 
-    return new Response(
-      JSON.stringify(enrichedData),
-      { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
-      }
-    )
-
-  } catch (error) {
-    console.error('Error enriching tool data:', error)
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        fallback: {
-          category: "Other",
-          description: "Please add description manually",
-          logoUrl: "",
-          confidence: 0,
-          reasoning: "AI enrichment failed",
-          alternativeCategories: []
-        }
+        success: true, 
+        toolId,
+        enriched: Object.keys(updateData).length > 0,
+        updates: updateData
       }),
       { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        }, 
-        status: 400 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
-    )
+    );
+
+  } catch (error) {
+    console.error('Error in enrich-tool function:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
   }
-})
+});
