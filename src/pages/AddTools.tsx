@@ -1,173 +1,130 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, ArrowRight, Lightbulb, Sparkles, ArrowLeft, MapPin } from 'lucide-react';
+import { ArrowRight, Lightbulb, Sparkles, ArrowLeft, MapPin } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTools } from '@/contexts/ToolsContext';
-import { SmartToolInput } from '@/components/SmartToolInput';
 import { ProgressIndicator } from '@/components/ProgressIndicator';
 import { AISuggestionsPanel } from '@/components/AISuggestionsPanel';
 import { EmailCaptureSection } from '@/components/EmailCaptureSection';
+import { ToolSearchBar } from '@/components/ToolSearchBar';
+import { ToolBucket } from '@/components/ToolBucket';
+import { supabase } from '@/integrations/supabase/client';
 import { defaultCategories } from '@/lib/categories';
 
 interface Tool {
   id: string;
   name: string;
   category: string;
-  confirmedCategory?: string; // User's confirmed category choice
+  confirmedCategory?: string;
   description: string;
   logoUrl?: string;
   confidence?: number;
 }
 
-// Use categories from centralized module
-const categories = defaultCategories;
+interface EnrichedData {
+  category: string;
+  description: string;
+  logoUrl: string;
+  confidence: number;
+}
 
 const AddTools = () => {
   const { tools: contextTools, setTools: setContextTools } = useTools();
-  const [toolsByCategory, setToolsByCategory] = useState<Record<string, Tool[]>>(() => {
-    // Initialize with empty tools for each category
-    return categories.reduce((acc, cat) => {
-      acc[cat.id] = [{ 
-        id: `${cat.id.toLowerCase()}-1`, 
-        name: "", 
-        category: cat.id, 
-        description: "", 
-        logoUrl: "", 
-        confidence: 0 
-      }];
-      return acc;
-    }, {} as Record<string, Tool[]>);
-  });
-  const [activeTab, setActiveTab] = useState('Marketing');
+  const [tools, setTools] = useState<Tool[]>([]);
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showEmailCapture, setShowEmailCapture] = useState(false);
   const [emailCaptured, setEmailCaptured] = useState(false);
   const navigate = useNavigate();
 
-  // Load tools from context on mount only
+  // Load tools from context on mount
   useEffect(() => {
     if (contextTools.length > 0) {
-      const categorized = categories.reduce((acc, cat) => {
-        acc[cat.id] = contextTools.filter(tool => (tool.confirmedCategory || tool.category) === cat.id);
-        // Ensure at least one empty tool per category
-        if (acc[cat.id].length === 0) {
-          acc[cat.id] = [{ 
-            id: `${cat.id.toLowerCase()}-${Date.now()}`, 
-            name: "", 
-            category: cat.id, 
-            description: "", 
-            logoUrl: "", 
-            confidence: 0 
-          }];
-        }
-        return acc;
-      }, {} as Record<string, Tool[]>);
-      setToolsByCategory(categorized);
+      setTools(contextTools);
     }
-  }, []); // Only run on mount
+  }, []);
 
-  // Save to context when tools change, but avoid infinite loops
+  // Save to context when tools change
   useEffect(() => {
-    const allTools = Object.values(toolsByCategory).flat();
-    const validTools = allTools.filter(tool => tool.name.trim() && (tool.confirmedCategory || tool.category));
-    
-    // Only update context if tools actually changed
-    const currentValidTools = contextTools.filter(tool => tool.name.trim() && (tool.confirmedCategory || tool.category));
-    const toolsChanged = validTools.length !== currentValidTools.length || 
-      validTools.some(tool => !currentValidTools.find(ct => ct.id === tool.id && ct.name === tool.name));
-    
-    if (toolsChanged && validTools.length > 0) {
+    const validTools = tools.filter(tool => tool.name.trim());
+    if (validTools.length > 0) {
       setContextTools(validTools);
     }
-  }, [toolsByCategory]);
+  }, [tools, setContextTools]);
 
-  const addTool = (category: string) => {
+  const enrichToolData = useCallback(async (toolName: string): Promise<EnrichedData | null> => {
+    if (!toolName.trim() || toolName.length < 2) return null;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('enrichToolData', {
+        body: { toolName: toolName.trim() }
+      });
+
+      if (error) throw error;
+
+      if (data && !data.error) {
+        return data;
+      } else if (data?.fallback) {
+        return data.fallback;
+      }
+    } catch (error) {
+      console.error('Error enriching tool data:', error);
+    }
+    return null;
+  }, []);
+
+  const handleAddTool = useCallback(async (toolName: string, suggestedCategory?: string) => {
+    // Check if tool already exists
+    const existingTool = tools.find(tool => 
+      tool.name.toLowerCase() === toolName.toLowerCase()
+    );
+    
+    if (existingTool) return;
+
+    // Create new tool with initial data
     const newTool: Tool = {
-      id: `${category.toLowerCase()}-${Date.now()}`,
-      name: '',
-      category,
+      id: `tool-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: toolName,
+      category: suggestedCategory || 'Other',
       description: '',
       logoUrl: '',
       confidence: 0
     };
-    setToolsByCategory(prev => ({
-      ...prev,
-      [category]: [...prev[category], newTool]
-    }));
-  };
 
-  const addExampleTool = (toolName: string, category: string) => {
-    // Check if the tool already exists in this category
-    const existingTool = toolsByCategory[category]?.find(tool => 
-      tool.name.toLowerCase() === toolName.toLowerCase()
-    );
-    
-    if (existingTool) return; // Don't add duplicates
+    // Add tool immediately to show in UI
+    setTools(prev => [...prev, newTool]);
 
-    // Find the first empty tool or add a new one
-    const emptyToolIndex = toolsByCategory[category]?.findIndex(tool => !tool.name.trim());
-    
-    if (emptyToolIndex !== -1) {
-      // Fill the empty tool
-      setToolsByCategory(prev => ({
-        ...prev,
-        [category]: prev[category].map((tool, index) => 
-          index === emptyToolIndex 
-            ? { ...tool, name: toolName }
-            : tool
-        )
-      }));
-    } else {
-      // Add a new tool
-      const newTool: Tool = {
-        id: `${category.toLowerCase()}-${Date.now()}`,
-        name: toolName,
-        category,
-        description: '',
-        logoUrl: '',
-        confidence: 0
-      };
-      setToolsByCategory(prev => ({
-        ...prev,
-        [category]: [...prev[category], newTool]
-      }));
+    // Enrich tool data in background
+    const enrichedData = await enrichToolData(toolName);
+    if (enrichedData) {
+      setTools(prev => prev.map(tool => 
+        tool.id === newTool.id 
+          ? {
+              ...tool,
+              category: enrichedData.category,
+              confirmedCategory: enrichedData.category,
+              description: enrichedData.description,
+              logoUrl: enrichedData.logoUrl,
+              confidence: enrichedData.confidence
+            }
+          : tool
+      ));
     }
-  };
+  }, [tools, enrichToolData]);
 
-  const removeTool = (id: string, category: string) => {
-    setToolsByCategory(prev => ({
-      ...prev,
-      [category]: prev[category].length > 1 
-        ? prev[category].filter(tool => tool.id !== id)
-        : prev[category]
-    }));
-  };
-
-  const updateTool = (id: string, field: keyof Tool, value: string | number) => {
-    setToolsByCategory(prev => {
-      const newState = { ...prev };
-      Object.keys(newState).forEach(category => {
-        newState[category] = newState[category].map(tool => 
-          tool.id === id ? { ...tool, [field]: value } : tool
-        );
-      });
-      return newState;
-    });
-  };
+  const handleRemoveTool = useCallback((id: string) => {
+    setTools(prev => prev.filter(tool => tool.id !== id));
+  }, []);
 
   const getAllValidTools = () => {
-    return Object.values(toolsByCategory).flat().filter(tool => tool.name.trim() && (tool.confirmedCategory || tool.category));
+    return tools.filter(tool => tool.name.trim());
   };
 
-  const getToolCountForCategory = (category: string) => {
-    return toolsByCategory[category]?.filter(tool => tool.name.trim()).length || 0;
-  };
-
-  const hasValidTools = getAllValidTools().length > 0;
-  const enrichedToolsCount = getAllValidTools().filter(tool => tool.confidence && tool.confidence > 70).length;
+  const validTools = getAllValidTools();
+  const hasValidTools = validTools.length > 0;
+  const enrichedToolsCount = validTools.filter(tool => tool.confidence && tool.confidence > 70).length;
   const currentStep = hasValidTools ? (enrichedToolsCount >= 3 ? 2 : 1) : 1;
 
   // Show suggestions when we have 3+ enriched tools
@@ -210,92 +167,43 @@ const AddTools = () => {
           stepLabels={['Add Tools', 'Get Insights']}
         />
 
-        {/* Tools Input Card */}
+        {/* Tool Search Section */}
         <Card className="shadow-xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5" />
-              Add Your Tech Tools by Category
+              Add Your Tech Tools
             </CardTitle>
             <CardDescription>
-              Organize your tools by business function. Just enter the tool names and our AI will handle the rest!
+              Search and add your business tools. Our AI will automatically categorize and enrich them with details.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4 lg:grid-cols-4">
-                {categories.map((category) => {
-                  const Icon = category.icon;
-                  const toolCount = getToolCountForCategory(category.id);
-                  return (
-                    <TabsTrigger key={category.id} value={category.id} className="flex items-center justify-center gap-2">
-                      <Icon className="h-4 w-4" />
-                      {category.name}
-                      {toolCount > 0 && (
-                        <span className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full">
-                          {toolCount}
-                        </span>
-                      )}
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
+          <CardContent className="space-y-6">
+            {/* Search Bar */}
+            <ToolSearchBar 
+              onAddTool={handleAddTool}
+              existingTools={tools.map(tool => ({ name: tool.name, category: tool.category }))}
+            />
 
-              {categories.map((category) => (
-                <TabsContent key={category.id} value={category.id} className="space-y-6 mt-6">
-                  <div className="text-center pb-4 border-b">
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                      <category.icon className="h-6 w-6 text-primary" />
-                      <h3 className="text-lg font-semibold">{category.name} Tools</h3>
-                    </div>
-                    <p className="text-muted-foreground">{category.description}</p>
-                    <div className="flex flex-wrap gap-2 justify-center mt-2">
-                      {category.examples.map((example, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => addExampleTool(example, category.id)}
-                          className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
-                        >
-                          {example}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    {toolsByCategory[category.id]?.map((tool) => (
-                      <SmartToolInput
-                        key={tool.id}
-                        tool={tool}
-                        onUpdate={updateTool}
-                        onRemove={(id: string) => removeTool(id, category.id)}
-                      />
-                    ))}
-                  </div>
-                  
-                  <Button
-                    onClick={() => addTool(category.id)}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Another {category.name} Tool
-                  </Button>
-                </TabsContent>
-              ))}
-            </Tabs>
+            {/* Tool Bucket */}
+            <ToolBucket 
+              tools={tools}
+              onRemoveTool={handleRemoveTool}
+              activeFilters={activeFilters}
+              onFilterChange={setActiveFilters}
+            />
 
             {/* Navigation */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t mt-6">
+            <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t">
               <div className="flex-1">
                 <p className="text-sm text-muted-foreground">
-                  {getAllValidTools().length} tools added across all categories
+                  {validTools.length} tools added
                 </p>
               </div>
               {hasValidTools && (
                 <Button
                   onClick={() => navigate('/tech-map')}
-                  className={`gap-2 transition-all ${enrichedToolsCount >= 3 ? 'animate-pulse' : ''}`}
+                  className={`gap-2 transition-all animate-fade-in ${enrichedToolsCount >= 3 ? 'animate-pulse' : ''}`}
                 >
                   <MapPin className="h-4 w-4" />
                   View Tech Map
@@ -308,9 +216,9 @@ const AddTools = () => {
 
         {/* AI Suggestions Panel */}
         {showSuggestions && (
-          <div className="mt-8">
+          <div className="mt-8 animate-fade-in">
             <AISuggestionsPanel 
-              tools={getAllValidTools()}
+              tools={validTools}
               isVisible={showSuggestions}
             />
           </div>
@@ -318,7 +226,7 @@ const AddTools = () => {
 
         {/* Email Capture Section */}
         {showEmailCapture && (
-          <div className="mt-8">
+          <div className="mt-8 animate-fade-in">
             <EmailCaptureSection 
               isVisible={showEmailCapture}
               onEmailCaptured={handleEmailCaptured}
