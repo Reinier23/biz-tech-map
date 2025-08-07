@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Search, Plus, Sparkles, Building } from 'lucide-react';
+import { Search, Plus, Sparkles, Building, Lightbulb } from 'lucide-react';
 import { getToolSuggestions, ToolSuggestion } from '@/lib/toolSuggestions';
 import { getCategoryConfig } from '@/lib/categories';
 import { supabase } from '@/integrations/supabase/client';
+import { ToolSuggestionDialog } from '@/components/ToolSuggestionDialog';
 
 interface ToolSearchBarProps {
   onAddTool: (toolName: string, category?: string) => void;
@@ -21,6 +22,7 @@ export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existin
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [useApiSearch, setUseApiSearch] = useState(true);
+  const [showSuggestionDialog, setShowSuggestionDialog] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -205,11 +207,22 @@ export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existin
             <CommandList className="max-h-80">
               {suggestions.length === 0 && query.length > 0 ? (
                 <CommandEmpty className="py-6 text-center text-sm">
-                  <div className="space-y-2">
-                    <p>No matches found for "{query}"</p>
-                    <p className="text-muted-foreground text-xs">
-                      Try popular tools like Salesforce, HubSpot, or Slack
-                    </p>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <p>No matches found for "{query}"</p>
+                      <p className="text-muted-foreground text-xs">
+                        Try popular tools like Salesforce, HubSpot, or Slack
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => setShowSuggestionDialog(true)}
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                    >
+                      <Lightbulb className="h-4 w-4" />
+                      Suggest this tool
+                    </Button>
                   </div>
                 </CommandEmpty>
               ) : (
@@ -276,6 +289,12 @@ export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existin
           </Command>
         </div>
       )}
+
+      <ToolSuggestionDialog
+        isOpen={showSuggestionDialog}
+        onClose={() => setShowSuggestionDialog(false)}
+        initialToolName={query}
+      />
     </div>
   );
 };

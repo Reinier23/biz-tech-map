@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      tool_suggestions: {
+        Row: {
+          id: string
+          name: string
+          submitted_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          submitted_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          submitted_at?: string
+        }
+        Relationships: []
+      }
       tools_catalog: {
         Row: {
           category: string
