@@ -3,9 +3,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
-import { Search, Plus, Sparkles } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Search, Plus, Sparkles, Building } from 'lucide-react';
 import { getToolSuggestions, ToolSuggestion } from '@/lib/toolSuggestions';
 import { getCategoryConfig } from '@/lib/categories';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ToolSearchBarProps {
   onAddTool: (toolName: string, category?: string) => void;
@@ -17,21 +19,74 @@ export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existin
   const [suggestions, setSuggestions] = useState<ToolSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [useApiSearch, setUseApiSearch] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Fetch suggestions from API or fallback to local search
+  const fetchSuggestions = useCallback(async (searchQuery: string) => {
+    if (!useApiSearch) {
+      // Fallback to local search
+      const newSuggestions = getToolSuggestions(searchQuery, 8);
+      const filteredSuggestions = newSuggestions.filter(suggestion => 
+        !existingTools.some(tool => 
+          tool.name.toLowerCase() === suggestion.name.toLowerCase()
+        )
+      );
+      setSuggestions(filteredSuggestions);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase.functions.invoke('search-tools', {
+        body: JSON.stringify({ 
+          query: searchQuery,
+          limit: 10 
+        })
+      });
+
+      if (error) {
+        console.warn('API search failed, falling back to local search:', error);
+        setUseApiSearch(false);
+        const newSuggestions = getToolSuggestions(searchQuery, 8);
+        const filteredSuggestions = newSuggestions.filter(suggestion => 
+          !existingTools.some(tool => 
+            tool.name.toLowerCase() === suggestion.name.toLowerCase()
+          )
+        );
+        setSuggestions(filteredSuggestions);
+        return;
+      }
+
+      // Filter out already added tools
+      const filteredSuggestions = (data?.tools || []).filter((suggestion: ToolSuggestion) => 
+        !existingTools.some(tool => 
+          tool.name.toLowerCase() === suggestion.name.toLowerCase()
+        )
+      );
+      setSuggestions(filteredSuggestions);
+    } catch (error) {
+      console.warn('API search error, falling back to local search:', error);
+      setUseApiSearch(false);
+      const newSuggestions = getToolSuggestions(searchQuery, 8);
+      const filteredSuggestions = newSuggestions.filter(suggestion => 
+        !existingTools.some(tool => 
+          tool.name.toLowerCase() === suggestion.name.toLowerCase()
+        )
+      );
+      setSuggestions(filteredSuggestions);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [useApiSearch, existingTools]);
+
   // Update suggestions when query changes
   useEffect(() => {
-    const newSuggestions = getToolSuggestions(query, 8);
-    // Filter out already added tools
-    const filteredSuggestions = newSuggestions.filter(suggestion => 
-      !existingTools.some(tool => 
-        tool.name.toLowerCase() === suggestion.name.toLowerCase()
-      )
-    );
-    setSuggestions(filteredSuggestions);
+    fetchSuggestions(query);
     setSelectedIndex(0);
-  }, [query, existingTools]);
+  }, [query, fetchSuggestions]);
 
   // Show suggestions when input has content
   useEffect(() => {
@@ -183,18 +238,28 @@ export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existin
                             >
                               <div className="flex items-center justify-between w-full">
                                 <div className="flex items-center space-x-3">
+                                  <Avatar className="h-8 w-8 border">
+                                    <AvatarImage 
+                                      src={suggestion.logoUrl} 
+                                      alt={`${suggestion.name} logo`}
+                                      className="object-contain p-1"
+                                    />
+                                    <AvatarFallback className="text-xs bg-muted">
+                                      <Building className="h-4 w-4" />
+                                    </AvatarFallback>
+                                  </Avatar>
                                   <div className="space-y-1">
                                     <div className="font-medium">
                                       {highlightMatch(suggestion.name, query)}
                                     </div>
-                                    <div className="text-xs text-muted-foreground">
+                                    <div className="text-xs text-muted-foreground line-clamp-1">
                                       {suggestion.description}
                                     </div>
                                   </div>
                                 </div>
                                 <Badge 
                                   variant="outline" 
-                                  className={`${categoryConfig.color} ${categoryConfig.textColor} text-xs`}
+                                  className={`${categoryConfig.color} ${categoryConfig.textColor} text-xs shrink-0`}
                                 >
                                   {category}
                                 </Badge>

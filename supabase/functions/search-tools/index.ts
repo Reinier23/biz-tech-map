@@ -1,4 +1,12 @@
-export interface ToolSuggestion {
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+interface ToolSuggestion {
   id: string;
   name: string;
   category: string;
@@ -6,7 +14,8 @@ export interface ToolSuggestion {
   logoUrl?: string;
 }
 
-export const toolSuggestions: ToolSuggestion[] = [
+// Tool suggestions with logos - matching the client-side data
+const toolSuggestions: ToolSuggestion[] = [
   // Marketing Tools
   { id: 'hubspot', name: 'HubSpot', category: 'Marketing', description: 'All-in-one marketing, sales, and service platform', logoUrl: 'https://logo.clearbit.com/hubspot.com' },
   { id: 'mailchimp', name: 'Mailchimp', category: 'Marketing', description: 'Email marketing and automation platform', logoUrl: 'https://logo.clearbit.com/mailchimp.com' },
@@ -74,10 +83,14 @@ export const toolSuggestions: ToolSuggestion[] = [
   { id: 'kubernetes', name: 'Kubernetes', category: 'Other', description: 'Container orchestration and management', logoUrl: 'https://logo.clearbit.com/kubernetes.io' }
 ];
 
-export const getToolSuggestions = (query: string, limit: number = 8): ToolSuggestion[] => {
-  if (!query || query.length < 2) {
+// Enhanced search function with fuzzy matching and better scoring
+function searchTools(query: string, category?: string, limit: number = 10): ToolSuggestion[] {
+  if (!query || query.length < 1) {
     // Return popular tools when no query
-    return toolSuggestions.slice(0, limit);
+    const filtered = category 
+      ? toolSuggestions.filter(tool => tool.category === category)
+      : toolSuggestions;
+    return filtered.slice(0, limit);
   }
 
   const lowercaseQuery = query.toLowerCase();
@@ -86,6 +99,7 @@ export const getToolSuggestions = (query: string, limit: number = 8): ToolSugges
   const scored = toolSuggestions.map(tool => {
     let score = 0;
     const toolName = tool.name.toLowerCase();
+    const toolDesc = tool.description.toLowerCase();
     
     // Exact match gets highest score
     if (toolName === lowercaseQuery) {
@@ -95,27 +109,83 @@ export const getToolSuggestions = (query: string, limit: number = 8): ToolSugges
     else if (toolName.startsWith(lowercaseQuery)) {
       score = 80;
     }
-    // Contains query gets medium score
+    // Contains query in name gets medium-high score
     else if (toolName.includes(lowercaseQuery)) {
       score = 60;
     }
+    // Word boundary match in name
+    else if (new RegExp(`\\b${lowercaseQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i').test(toolName)) {
+      score = 70;
+    }
     // Description contains query gets lower score
-    else if (tool.description.toLowerCase().includes(lowercaseQuery)) {
+    else if (toolDesc.includes(lowercaseQuery)) {
       score = 30;
+    }
+    // Fuzzy matching for typos (simple character replacement)
+    else {
+      const fuzzyRegex = new RegExp(lowercaseQuery.split('').join('.*?'), 'i');
+      if (fuzzyRegex.test(toolName)) {
+        score = 25;
+      }
+    }
+
+    // Boost score for category match
+    if (category && tool.category === category) {
+      score += 10;
     }
     
     return { ...tool, score };
   });
 
   // Filter and sort by score, then take top results
-  return scored
+  const results = scored
     .filter(tool => tool.score > 0)
     .sort((a, b) => b.score - a.score)
-    .slice(0, limit);
-};
+    .slice(0, limit)
+    .map(({ score, ...tool }) => tool); // Remove score from final results
 
-export const getPopularToolsByCategory = (category: string): ToolSuggestion[] => {
-  return toolSuggestions
-    .filter(tool => tool.category === category)
-    .slice(0, 5);
-};
+  return results;
+}
+
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const url = new URL(req.url);
+    const query = url.searchParams.get('q') || '';
+    const category = url.searchParams.get('category') || undefined;
+    const limit = parseInt(url.searchParams.get('limit') || '10');
+
+    console.log(`Search request: query="${query}", category="${category}", limit=${limit}`);
+
+    const tools = searchTools(query, category, limit);
+    
+    const response = {
+      tools,
+      total: tools.length,
+      hasMore: false, // Since we limit results, this would need more complex logic for pagination
+      query,
+      category
+    };
+
+    console.log(`Returning ${tools.length} tools`);
+
+    return new Response(JSON.stringify(response), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.error('Error in search-tools function:', error);
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      tools: [],
+      total: 0,
+      hasMore: false
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+});
