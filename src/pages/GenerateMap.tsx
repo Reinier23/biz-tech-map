@@ -3,25 +3,19 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Map, Lightbulb, BarChart3, Users, Zap } from "lucide-react";
+import { ArrowLeft, Map, Lightbulb, BarChart3, Users, Zap, Package } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTools } from "@/contexts/ToolsContext";
+import { getCategoryConfig } from "@/lib/categories";
 
 const GenerateMap = () => {
   const { tools } = useTools();
   const [selectedView, setSelectedView] = useState<"category" | "flow" | "integration">("category");
 
   const getCategoryIcon = (category: string) => {
-    switch (category.toLowerCase()) {
-      case "sales":
-        return <BarChart3 className="w-4 h-4" />;
-      case "marketing":
-        return <Zap className="w-4 h-4" />;
-      case "service":
-        return <Users className="w-4 h-4" />;
-      default:
-        return <Map className="w-4 h-4" />;
-    }
+    const config = getCategoryConfig(category);
+    const IconComponent = config.icon;
+    return <IconComponent className="w-4 h-4" />;
   };
 
   const toolsByCategory = tools.reduce((acc, tool) => {
@@ -150,36 +144,30 @@ const GenerateMap = () => {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col lg:flex-row gap-6">
-                <div className="flex-1">
-                  <h4 className="font-semibold mb-3 text-center">Lead Generation</h4>
-                  <div className="space-y-2">
-                    {toolsByCategory.Marketing?.map((tool) => (
-                      <div key={tool.id} className="p-2 bg-blue-50 border-l-4 border-blue-400 text-sm">
-                        {tool.name}
+                {Object.entries(toolsByCategory).map(([category, categoryTools], index) => {
+                  const stageName = index === 0 ? 'Lead Generation' : 
+                                  index === 1 ? 'Sales Process' : 
+                                  index === 2 ? 'Customer Success' : category;
+                  const borderColor = index === 0 ? 'border-blue-400' : 
+                                    index === 1 ? 'border-green-400' : 
+                                    index === 2 ? 'border-purple-400' : 'border-gray-400';
+                  const bgColor = index === 0 ? 'bg-blue-50' : 
+                                index === 1 ? 'bg-green-50' : 
+                                index === 2 ? 'bg-purple-50' : 'bg-gray-50';
+
+                  return (
+                    <div key={category} className="flex-1">
+                      <h4 className="font-semibold mb-3 text-center">{stageName}</h4>
+                      <div className="space-y-2">
+                        {categoryTools.map((tool) => (
+                          <div key={tool.id} className={`p-2 ${bgColor} border-l-4 ${borderColor} text-sm`}>
+                            {tool.name}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-semibold mb-3 text-center">Sales Process</h4>
-                  <div className="space-y-2">
-                    {toolsByCategory.Sales?.map((tool) => (
-                      <div key={tool.id} className="p-2 bg-green-50 border-l-4 border-green-400 text-sm">
-                        {tool.name}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-semibold mb-3 text-center">Customer Success</h4>
-                  <div className="space-y-2">
-                    {toolsByCategory.Service?.map((tool) => (
-                      <div key={tool.id} className="p-2 bg-purple-50 border-l-4 border-purple-400 text-sm">
-                        {tool.name}
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>

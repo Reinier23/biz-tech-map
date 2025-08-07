@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Download, Settings, Database, MessageSquare, LayoutGrid, Network, Lightbulb } from "lucide-react";
+import { ArrowLeft, Download, LayoutGrid, Network, Lightbulb } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTools } from "@/contexts/ToolsContext";
+import { getCategoryConfig } from "@/lib/categories";
 import {
   ReactFlow,
   MiniMap,
@@ -41,26 +42,15 @@ const TechMap = () => {
   // Use sample data if no tools are loaded
   const displayTools = tools.length > 0 ? tools : sampleTools;
 
-  // Categorize tools (use sample data if no tools)
-  const categorizedTools = {
-    Sales: displayTools.filter(tool => (tool.confirmedCategory || tool.category) === "Sales"),
-    Marketing: displayTools.filter(tool => (tool.confirmedCategory || tool.category) === "Marketing"),
-    Service: displayTools.filter(tool => (tool.confirmedCategory || tool.category) === "Service"),
-  };
-
-  // Get category icon and color
-  const getCategoryConfig = (category: string) => {
-    switch (category) {
-      case "Sales":
-        return { icon: Settings, color: "bg-primary", textColor: "text-primary" };
-      case "Marketing":
-        return { icon: MessageSquare, color: "bg-primary-glow", textColor: "text-primary-glow" };
-      case "Service":
-        return { icon: Database, color: "bg-accent", textColor: "text-accent" };
-      default:
-        return { icon: Settings, color: "bg-muted", textColor: "text-muted-foreground" };
+  // Categorize tools dynamically by all categories present
+  const categorizedTools = displayTools.reduce((acc, tool) => {
+    const effectiveCategory = tool.confirmedCategory || tool.category;
+    if (!acc[effectiveCategory]) {
+      acc[effectiveCategory] = [];
     }
-  };
+    acc[effectiveCategory].push(tool);
+    return acc;
+  }, {} as Record<string, (typeof displayTools)[0][]>);
 
   // Create nodes and edges for diagram view
   const createDiagramData = () => {

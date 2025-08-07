@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Sparkles, X, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { getAllCategories } from '@/lib/categories';
 
 interface Tool {
   id: string;
@@ -170,15 +171,15 @@ export const SmartToolInput: React.FC<SmartToolInputProps> = ({
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent className="bg-background border-2 shadow-lg z-50">
-                      <SelectItem value="Sales" className="hover:bg-secondary focus:bg-secondary">
-                        Sales
-                      </SelectItem>
-                      <SelectItem value="Marketing" className="hover:bg-secondary focus:bg-secondary">
-                        Marketing
-                      </SelectItem>
-                      <SelectItem value="Service" className="hover:bg-secondary focus:bg-secondary">
-                        Service
-                      </SelectItem>
+                      {getAllCategories().map((category) => (
+                        <SelectItem 
+                          key={category.id} 
+                          value={category.id} 
+                          className="hover:bg-secondary focus:bg-secondary"
+                        >
+                          {category.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   {tool.confirmedCategory && tool.confirmedCategory !== tool.category && (

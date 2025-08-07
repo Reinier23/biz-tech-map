@@ -3,10 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, ArrowRight, Lightbulb, Sparkles, ArrowLeft, MapPin, Settings, MessageSquare, Database } from 'lucide-react';
+import { Plus, ArrowRight, Lightbulb, Sparkles, ArrowLeft, MapPin } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTools } from '@/contexts/ToolsContext';
 import { SmartToolInput } from '@/components/SmartToolInput';
+import { defaultCategories } from '@/lib/categories';
 
 interface Tool {
   id: string;
@@ -18,36 +19,24 @@ interface Tool {
   confidence?: number;
 }
 
-const categories = [
-  { 
-    id: 'Marketing', 
-    name: 'Marketing', 
-    icon: Settings, 
-    description: 'Tools for campaigns, analytics, and content creation',
-    examples: ['HubSpot', 'Google Analytics', 'Mailchimp']
-  },
-  { 
-    id: 'Sales', 
-    name: 'Sales', 
-    icon: MessageSquare, 
-    description: 'CRM, lead generation, and sales automation tools',
-    examples: ['Salesforce', 'Pipedrive', 'LinkedIn Sales Navigator'] 
-  },
-  { 
-    id: 'Service', 
-    name: 'Service', 
-    icon: Database, 
-    description: 'Customer support and service delivery tools',
-    examples: ['Zendesk', 'Slack', 'Jira']
-  }
-];
+// Use categories from centralized module
+const categories = defaultCategories;
 
 const AddTools = () => {
   const { tools: contextTools, setTools: setContextTools } = useTools();
-  const [toolsByCategory, setToolsByCategory] = useState<Record<string, Tool[]>>({
-    Marketing: [{ id: "marketing-1", name: "", category: "Marketing", description: "", logoUrl: "", confidence: 0 }],
-    Sales: [{ id: "sales-1", name: "", category: "Sales", description: "", logoUrl: "", confidence: 0 }],
-    Service: [{ id: "service-1", name: "", category: "Service", description: "", logoUrl: "", confidence: 0 }]
+  const [toolsByCategory, setToolsByCategory] = useState<Record<string, Tool[]>>(() => {
+    // Initialize with empty tools for each category
+    return categories.reduce((acc, cat) => {
+      acc[cat.id] = [{ 
+        id: `${cat.id.toLowerCase()}-1`, 
+        name: "", 
+        category: cat.id, 
+        description: "", 
+        logoUrl: "", 
+        confidence: 0 
+      }];
+      return acc;
+    }, {} as Record<string, Tool[]>);
   });
   const [activeTab, setActiveTab] = useState('Marketing');
   const navigate = useNavigate();
@@ -201,7 +190,7 @@ const AddTools = () => {
           </CardHeader>
           <CardContent>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className={`grid w-full grid-cols-${categories.length}`}>
                 {categories.map((category) => {
                   const Icon = category.icon;
                   const toolCount = getToolCountForCategory(category.id);
