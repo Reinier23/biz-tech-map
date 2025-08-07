@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      tools_catalog: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          domain: string | null
+          id: string
+          logourl: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          domain?: string | null
+          id: string
+          logourl?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          domain?: string | null
+          id?: string
+          logourl?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       waitlist: {
         Row: {
           created_at: string
