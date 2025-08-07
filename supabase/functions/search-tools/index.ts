@@ -48,6 +48,7 @@ const toolSuggestions: ToolSuggestion[] = [
   { id: 'zoominfo', name: 'ZoomInfo', category: 'Sales', description: 'B2B contact database and sales intelligence', logoUrl: 'https://logo.clearbit.com/zoominfo.com' },
   { id: 'gong', name: 'Gong', category: 'Sales', description: 'Revenue intelligence and conversation analytics', logoUrl: 'https://logo.clearbit.com/gong.io' },
   { id: 'chorus', name: 'Chorus', category: 'Sales', description: 'Conversation intelligence for sales teams', logoUrl: 'https://logo.clearbit.com/chorus.ai' },
+  { id: 'dynamics-365-sales', name: 'Dynamics 365 Sales', category: 'Sales', description: 'Microsoft CRM for sales and pipeline management', logoUrl: 'https://logo.clearbit.com/dynamics.com' },
 
   // Service Tools
   { id: 'zendesk', name: 'Zendesk', category: 'Service', description: 'Customer service and support ticketing system', logoUrl: 'https://logo.clearbit.com/zendesk.com' },
@@ -64,6 +65,10 @@ const toolSuggestions: ToolSuggestion[] = [
   { id: 'notion', name: 'Notion', category: 'Service', description: 'All-in-one workspace for notes and collaboration', logoUrl: 'https://logo.clearbit.com/notion.so' },
   { id: 'asana', name: 'Asana', category: 'Service', description: 'Project management and team collaboration', logoUrl: 'https://logo.clearbit.com/asana.com' },
   { id: 'trello', name: 'Trello', category: 'Service', description: 'Visual project management with boards', logoUrl: 'https://logo.clearbit.com/trello.com' },
+  { id: 'dynamics-365-customer-service', name: 'Dynamics 365 Customer Service', category: 'Service', description: 'Microsoft customer service and support platform', logoUrl: 'https://logo.clearbit.com/dynamics.com' },
+  { id: 'sharepoint', name: 'SharePoint', category: 'Service', description: 'Microsoft content and collaboration platform', logoUrl: 'https://logo.clearbit.com/sharepoint.com' },
+  { id: 'onedrive', name: 'OneDrive', category: 'Service', description: 'Microsoft cloud file storage and sharing', logoUrl: 'https://logo.clearbit.com/onedrive.com' },
+  { id: 'outlook', name: 'Outlook', category: 'Service', description: 'Microsoft email and calendar', logoUrl: 'https://logo.clearbit.com/outlook.com' },
 
   // Other Tools
   { id: 'github', name: 'GitHub', category: 'Other', description: 'Code hosting and version control platform', logoUrl: 'https://logo.clearbit.com/github.com' },
@@ -80,7 +85,15 @@ const toolSuggestions: ToolSuggestion[] = [
   { id: 'mongodb', name: 'MongoDB', category: 'Other', description: 'Document-oriented database platform', logoUrl: 'https://logo.clearbit.com/mongodb.com' },
   { id: 'postgresql', name: 'PostgreSQL', category: 'Other', description: 'Open source relational database', logoUrl: 'https://logo.clearbit.com/postgresql.org' },
   { id: 'redis', name: 'Redis', category: 'Other', description: 'In-memory data structure store and cache', logoUrl: 'https://logo.clearbit.com/redis.io' },
-  { id: 'kubernetes', name: 'Kubernetes', category: 'Other', description: 'Container orchestration and management', logoUrl: 'https://logo.clearbit.com/kubernetes.io' }
+  { id: 'kubernetes', name: 'Kubernetes', category: 'Other', description: 'Container orchestration and management', logoUrl: 'https://logo.clearbit.com/kubernetes.io' },
+  { id: 'microsoft-365', name: 'Microsoft 365', category: 'Other', description: 'Productivity suite including Office apps and cloud services', logoUrl: 'https://logo.clearbit.com/microsoft.com' },
+  { id: 'power-automate', name: 'Power Automate', category: 'Other', description: 'Microsoft workflow automation platform', logoUrl: 'https://logo.clearbit.com/microsoft.com' },
+  { id: 'power-apps', name: 'Power Apps', category: 'Other', description: 'Microsoft low-code app development platform', logoUrl: 'https://logo.clearbit.com/microsoft.com' },
+  { id: 'azure-devops', name: 'Azure DevOps', category: 'Other', description: 'Microsoft CI/CD and project tracking for developers', logoUrl: 'https://logo.clearbit.com/azure.com' },
+  { id: 'visual-studio', name: 'Visual Studio', category: 'Other', description: 'Microsoft IDE for development', logoUrl: 'https://logo.clearbit.com/visualstudio.com' },
+  { id: 'windows-server', name: 'Windows Server', category: 'Other', description: 'Microsoft server operating system', logoUrl: 'https://logo.clearbit.com/windows.com' },
+  { id: 'azure-active-directory', name: 'Azure Active Directory (Entra ID)', category: 'Other', description: 'Microsoft identity and access management', logoUrl: 'https://logo.clearbit.com/microsoft.com' },
+  { id: 'intune', name: 'Microsoft Intune', category: 'Other', description: 'Endpoint management and device security', logoUrl: 'https://logo.clearbit.com/microsoft.com' }
 ];
 
 // Enhanced search function with fuzzy matching and better scoring

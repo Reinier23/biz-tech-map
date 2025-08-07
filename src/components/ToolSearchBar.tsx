@@ -175,7 +175,7 @@ export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existin
           onChange={(e) => handleInputChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => setShowSuggestions(true)}
-          placeholder="Search for tools like Salesforce, HubSpot, Slack..."
+          placeholder="Search for tools like Microsoft 365, Azure, Salesforce..."
           className="pl-10 pr-20 h-12 text-base bg-background border-2 focus:border-primary"
         />
         <Button
