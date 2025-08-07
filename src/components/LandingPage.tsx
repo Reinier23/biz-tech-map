@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, CheckCircle, Star, AlertTriangle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { CheckCircle, Star, AlertTriangle, Lightbulb, RefreshCw, TrendingDown, BarChart3, Brain, Zap, Mail, Gauge, Globe, HelpCircle } from "lucide-react";
 import { useState } from "react";
 import heroImage from "@/assets/tech-stack-consolidation-hero.jpg";
 
@@ -18,172 +20,172 @@ const LandingPage = () => {
     }
   };
 
-  const problems = [
-    "Redundant tools doing the same job",
-    "No visibility across teams or departments", 
-    "Unused licenses piling up",
-    "Surprise renewals and shadow IT"
+  const logos = ["HubSpot", "Slack", "Notion", "Intercom", "Asana"];
+
+  const features = [
+    { icon: Lightbulb, text: "Visualize your entire SaaS stack in one dashboard" },
+    { icon: RefreshCw, text: "Detect redundant or overlapping tools" },
+    { icon: TrendingDown, text: "Identify cost-saving opportunities automatically" },
+    { icon: BarChart3, text: "Understand how tools are connected — and where gaps exist" },
+    { icon: Brain, text: "Get GPT-powered suggestions to consolidate or improve" }
   ];
 
   const steps = [
     {
       title: "Add Your Tools",
-      description: "Input the tools your team uses. We enrich them automatically with logos, categories, and integration info."
+      description: "Input the software you use — or let us discover them automatically via integrations."
     },
     {
-      title: "Visualize Your Stack", 
-      description: "See your entire stack in a clear visual layout — including connections, overlaps, and gaps."
+      title: "See Your Stack",
+      description: "Get an interactive, visual map of your tools, grouped by category, function, and cost."
     },
     {
-      title: "Optimize & Save",
-      description: "Get AI-powered suggestions to consolidate tools, reduce costs, and strengthen your tech setup."
+      title: "Optimize with AI",
+      description: "Biz Tech Map shows where you can save money, eliminate waste, or improve performance — and why."
     }
   ];
 
-  const testimonials = [
+  const comingFeatures = [
+    { icon: Brain, text: "AI Stack Architect: Get a fully redesigned stack based on your goals, budget, and size" },
+    { icon: TrendingDown, text: "ROI & Usage Tracking: Know what tools deliver value — and which don't" },
+    { icon: Gauge, text: "Auto-Audit Mode: Ongoing suggestions as your stack evolves" },
+    { icon: Globe, text: "Tool-to-Tool Mapping: See actual data flows across your stack" },
+    { icon: Mail, text: "Slack & Email Alerts: Get notified before surprise renewals or waste builds up" }
+  ];
+
+  const faqs = [
     {
-      quote: "We saved $200k in redundant software within the first week.",
-      author: "Sarah Chen",
-      role: "CTO, GrowthCorp"
+      question: "How does Biz Tech Map work?",
+      answer: "You enter the tools you use, and our AI maps, analyzes, and suggests ways to optimize your stack based on usage, category, and redundancy."
     },
     {
-      quote: "Game-changer. We finally have a clear view of our entire stack.",
-      author: "Mike Rodriguez", 
-      role: "Ops Director, ScaleUp Inc."
+      question: "Is it free?",
+      answer: "Yes! You can start completely free. We're currently offering early access with no credit card required."
+    },
+    {
+      question: "Who is it for?",
+      answer: "Sales, marketing, and operations teams that want more control over their SaaS tools — and want to spend smarter."
+    },
+    {
+      question: "Is my data secure?",
+      answer: "Yes — we use encrypted transmission and storage. Your tool data is never sold or shared."
     }
   ];
 
-  const futureFeatures = [
-    "AI Stack Architect – Your personalized GPT agent for building an ideal, efficient stack",
-    "Autopilot Optimization – Continuous suggestions as your stack evolves", 
-    "Integration Mapping – Visualize real data flows between tools",
-    "ROI & Usage Insights – Spot underperforming tools in seconds",
-    "Slack + Email Alerts – Never miss a contract renewal or cost spike",
-    "Benchmarking – Compare your stack to similar companies",
-    "One-Click Consolidation – Deactivate or migrate tools directly from the platform (coming later)"
-  ];
-
-  const EmailForm = () => (
-    <form onSubmit={handleEmailSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+  const EmailForm = ({ label = "Join Early Access", size = "default" }: { label?: string; size?: "default" | "large" }) => (
+    <form onSubmit={handleEmailSubmit} className={`flex flex-col sm:flex-row gap-3 ${size === "large" ? "max-w-lg" : "max-w-md"} mx-auto`}>
       <Input
         type="email"
         placeholder="Enter your email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
-        className="flex-1"
+        className={`flex-1 ${size === "large" ? "h-12 text-lg" : ""}`}
       />
-      <Button type="submit" variant="hero" className="px-6">
-        {isSubmitted ? "Thanks!" : "Get Early Access"}
+      <Button type="submit" className={`${size === "large" ? "h-12 px-8 text-lg" : "px-6"} bg-primary hover:bg-primary/90 text-primary-foreground font-semibold`}>
+        {isSubmitted ? "Thanks!" : label}
       </Button>
     </form>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <div className="container mx-auto px-4 py-16">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Left Content */}
-          <div className="space-y-8">
-            <div className="space-y-6">
-              <h1 className="text-4xl lg:text-6xl font-bold text-foreground leading-tight">
-                Optimize Your SaaS Stack. Save Money.
-                <span className="bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-                  {" "}Instantly.
-                </span>
-              </h1>
-              <p className="text-xl text-muted-foreground leading-relaxed max-w-lg">
-                Biz Tech Map helps you visualize your tech stack, eliminate redundant tools, and cut costs — all powered by AI.
-              </p>
-            </div>
-
-            {/* Email Form */}
-            <EmailForm />
-          </div>
-
-          {/* Right Content - Hero Image */}
-          <div className="relative">
-            <div className="relative overflow-hidden rounded-2xl shadow-2xl">
-              <img 
-                src={heroImage} 
-                alt="Tech stack optimization dashboard" 
-                className="w-full h-auto animate-float"
-              />
-            </div>
-            <div className="absolute -top-4 -right-4 w-20 h-20 bg-primary/10 rounded-full blur-xl animate-pulse"></div>
-            <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-primary-glow/10 rounded-full blur-2xl animate-pulse delay-1000"></div>
+      <div className="container mx-auto px-4 py-20 lg:py-32">
+        <div className="text-center space-y-8 max-w-4xl mx-auto">
+          <h1 className="text-4xl lg:text-7xl font-bold text-foreground leading-tight">
+            Your Tech Stack Is Costing You
+            <span className="bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
+              {" "}More Than You Think.
+            </span>
+          </h1>
+          <p className="text-xl lg:text-2xl text-muted-foreground leading-relaxed max-w-3xl mx-auto">
+            Biz Tech Map helps you map, analyze, and optimize your SaaS tools — powered by GPT. Cut redundant tools, reduce spend, and make smarter software decisions.
+          </p>
+          
+          {/* Primary CTA */}
+          <div className="pt-8">
+            <EmailForm label="Join Early Access" size="large" />
           </div>
         </div>
       </div>
 
-      {/* Problem Section */}
-      <div className="bg-card/30 py-16">
+      {/* Logo Section */}
+      <div className="border-t border-b bg-muted/30 py-12">
         <div className="container mx-auto px-4">
-          <div className="text-center max-w-4xl mx-auto space-y-8">
-            <h2 className="text-3xl lg:text-4xl font-bold text-foreground">
-              Your Tech Stack Is Costing You More Than You Think
-            </h2>
-            <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-              {problems.map((problem, index) => (
-                <div key={index} className="flex items-center space-x-3 text-left">
-                  <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0" />
-                  <span className="text-muted-foreground">{problem}</span>
+          <div className="text-center space-y-8">
+            <p className="text-sm text-muted-foreground font-medium uppercase tracking-wider">
+              Built for modern SaaS teams
+            </p>
+            <div className="flex flex-wrap justify-center items-center gap-8 lg:gap-12">
+              {logos.map((logo, index) => (
+                <div key={index} className="text-lg font-semibold text-muted-foreground hover:text-foreground transition-colors">
+                  {logo}
                 </div>
               ))}
             </div>
-            <p className="text-lg text-primary font-medium">
-              Most companies waste up to 30% of their SaaS budget. Let's fix that.
+          </div>
+        </div>
+      </div>
+
+      {/* Callout Section */}
+      <div className="py-20 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5">
+        <div className="container mx-auto px-4">
+          <div className="text-center max-w-4xl mx-auto space-y-6">
+            <h2 className="text-3xl lg:text-5xl font-bold text-foreground">
+              47% of companies have tools that do the same job.
+            </h2>
+            <p className="text-xl text-muted-foreground leading-relaxed">
+              Most teams use 100+ apps. Many of them are redundant, underused, or unmonitored. SaaS sprawl is costing businesses up to 30% of their budget — and most don't even know it.
             </p>
           </div>
         </div>
       </div>
 
-      {/* How It Works */}
-      <div className="py-16">
+      {/* Features Section */}
+      <div className="py-20">
         <div className="container mx-auto px-4">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-              How It Works
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
+              What Biz Tech Map Helps You Do
             </h2>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {steps.map((step, index) => (
-              <div key={index} className="text-center space-y-4">
-                <div className="w-16 h-16 mx-auto rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold">
-                  {index + 1}
-                </div>
-                <h3 className="text-xl font-semibold text-foreground">{step.title}</h3>
-                <p className="text-muted-foreground">{step.description}</p>
-              </div>
-            ))}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {features.map((feature, index) => {
+              const IconComponent = feature.icon;
+              return (
+                <Card key={index} className="p-6 border-0 bg-card/50 hover:bg-card/70 transition-colors">
+                  <CardContent className="p-0 space-y-4">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <IconComponent className="w-6 h-6 text-primary" />
+                    </div>
+                    <p className="text-card-foreground leading-relaxed">{feature.text}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </div>
 
-      {/* Testimonials */}
-      <div className="bg-card/30 py-16">
+      {/* How It Works */}
+      <div className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-              Early Feedback
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
+              How It Works
             </h2>
           </div>
           
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {testimonials.map((testimonial, index) => (
-              <div key={index} className="p-6 rounded-xl bg-card border">
-                <div className="flex items-center space-x-1 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-primary text-primary" />
-                  ))}
+          <div className="grid md:grid-cols-3 gap-12 max-w-5xl mx-auto">
+            {steps.map((step, index) => (
+              <div key={index} className="text-center space-y-6">
+                <div className="w-16 h-16 mx-auto rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold shadow-lg">
+                  {index + 1}
                 </div>
-                <blockquote className="text-lg text-card-foreground mb-4">"{testimonial.quote}"</blockquote>
-                <div>
-                  <div className="font-semibold text-card-foreground">{testimonial.author}</div>
-                  <div className="text-muted-foreground">{testimonial.role}</div>
-                </div>
+                <h3 className="text-xl font-semibold text-foreground">{step.title}</h3>
+                <p className="text-muted-foreground leading-relaxed">{step.description}</p>
               </div>
             ))}
           </div>
@@ -191,66 +193,84 @@ const LandingPage = () => {
       </div>
 
       {/* Coming Soon Features */}
-      <div className="py-16">
+      <div className="py-20">
         <div className="container mx-auto px-4">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-              Coming Soon: Even Smarter Stack Management
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
+              What's Coming Next
             </h2>
           </div>
           
           <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {futureFeatures.map((feature, index) => (
-              <div key={index} className="flex items-start space-x-3 p-4 rounded-lg bg-card/50 border">
-                <CheckCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                <span className="text-card-foreground">{feature}</span>
-              </div>
-            ))}
+            {comingFeatures.map((feature, index) => {
+              const IconComponent = feature.icon;
+              return (
+                <div key={index} className="flex items-start space-x-4 p-6 rounded-xl bg-card/30 border">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
+                    <IconComponent className="w-4 h-4 text-primary" />
+                  </div>
+                  <span className="text-card-foreground leading-relaxed">{feature.text}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
 
-      {/* Why Now Callout */}
-      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 py-16">
+      {/* FAQ Section */}
+      <div className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
-          <div className="text-center max-w-2xl mx-auto space-y-6">
-            <h2 className="text-3xl lg:text-4xl font-bold text-foreground">
-              Why Now?
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
+              Frequently Asked Questions
             </h2>
-            <div className="text-lg text-muted-foreground space-y-2">
-              <p className="flex items-center justify-center space-x-2">
-                <AlertTriangle className="w-5 h-5 text-destructive" />
-                <span>48% of companies plan to optimize their software spend this year.</span>
-              </p>
-              <p>Don't miss the moment. SaaS sprawl is costing companies time and money — and you don't need to be one of them.</p>
-            </div>
+          </div>
+          
+          <div className="max-w-3xl mx-auto">
+            <Accordion type="single" collapsible className="space-y-4">
+              {faqs.map((faq, index) => (
+                <AccordionItem key={index} value={`item-${index}`} className="border border-border rounded-lg px-6">
+                  <AccordionTrigger className="text-left hover:no-underline py-6">
+                    <div className="flex items-center space-x-3">
+                      <HelpCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                      <span className="font-semibold text-foreground">{faq.question}</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-6 text-muted-foreground leading-relaxed">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </div>
         </div>
       </div>
 
       {/* Final CTA */}
-      <div className="py-16">
+      <div className="py-24 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10">
         <div className="container mx-auto px-4 text-center">
-          <div className="max-w-2xl mx-auto space-y-6">
-            <h2 className="text-3xl lg:text-4xl font-bold text-foreground">
-              Get Early Access
+          <div className="max-w-3xl mx-auto space-y-8">
+            <h2 className="text-3xl lg:text-5xl font-bold text-foreground leading-tight">
+              Join 500+ businesses getting clarity on their tech stack.
             </h2>
-            <p className="text-xl text-muted-foreground">
-              Be the first to optimize your stack and cut costs with AI. No credit card required.
+            <p className="text-xl text-muted-foreground leading-relaxed">
+              Biz Tech Map helps you reduce waste, save money, and simplify your tools — using AI.
             </p>
-            <EmailForm />
+            <div className="pt-4">
+              <EmailForm label="Join the Early Access" size="large" />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="bg-card/30 py-8 border-t">
+      <div className="bg-card/30 py-12 border-t">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 text-sm text-muted-foreground">
             <span>© 2025 Biz Tech Map</span>
-            <div className="flex space-x-6">
-              <span>Contact: hello@biztechmap.com</span>
-              <span>Privacy Policy</span>
+            <div className="flex space-x-8">
+              <span className="hover:text-foreground cursor-pointer transition-colors">Contact: hello@biztechmap.com</span>
+              <span className="hover:text-foreground cursor-pointer transition-colors">Privacy Policy</span>
             </div>
           </div>
         </div>
