@@ -101,6 +101,7 @@ const enrichToolData = useCallback(async (toolName: string, suggestedCategory?: 
       id: `tool-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       name: toolName,
       category: suggestedCategory || 'Other',
+      confirmedCategory: suggestedCategory || 'Other',
       description: '',
       logoUrl: '',
       confidence: 0
@@ -109,24 +110,26 @@ const enrichToolData = useCallback(async (toolName: string, suggestedCategory?: 
     // Add tool immediately to show in UI
     setTools(prev => [...prev, newTool]);
 
-// Enrich tool data in background
-console.log(`🔄 Enriching tool: ${toolName}`);
-const enrichedData = await enrichToolData(toolName, suggestedCategory);
-if (enrichedData) {
-  console.log(`✅ Tool enriched successfully:`, enrichedData);
-  setTools(prev => prev.map(tool => 
-    tool.id === newTool.id 
-      ? {
-          ...tool,
-          category: enrichedData.category,
-          confirmedCategory: enrichedData.confirmedCategory,
-          description: enrichedData.description,
-          logoUrl: enrichedData.logoUrl,
-          confidence: enrichedData.confidence
-        }
-      : tool
-  ));
-}
+    // Enrich tool data in background
+    console.log(`🔄 Enriching tool: ${toolName}`);
+    const enrichedData = await enrichToolData(toolName, suggestedCategory);
+
+    // Logging for verification
+    console.log('[addTool]', { name: toolName, suggestedCategory, logoReturned: !!(enrichedData?.logoUrl) });
+
+    if (enrichedData) {
+      console.log(`✅ Tool enriched successfully:`, enrichedData);
+      setTools(prev => prev.map(tool => 
+        tool.id === newTool.id 
+          ? {
+              ...tool,
+              // Preserve original category and confirmedCategory from selection
+              description: enrichedData.description || tool.description,
+              logoUrl: enrichedData.logoUrl || tool.logoUrl,
+            }
+          : tool
+      ));
+    }
   }, [tools, enrichToolData]);
 
   const handleRemoveTool = useCallback((id: string) => {
