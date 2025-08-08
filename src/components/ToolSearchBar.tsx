@@ -10,6 +10,13 @@ import { getCategoryConfig } from '@/lib/categories';
 import { supabase } from '@/integrations/supabase/client';
 import { ToolSuggestionDialog } from '@/components/ToolSuggestionDialog';
 
+// Brandfetch Logo CDN (public). Set your client ID if available; optional.
+const BRANDFETCH_CLIENT_ID = '';
+const brandfetchLogo = (domain: string) =>
+  `https://cdn.brandfetch.io/${domain}${BRANDFETCH_CLIENT_ID ? `?c=${BRANDFETCH_CLIENT_ID}` : ''}`;
+
+type UISuggestion = ToolSuggestion & { domain?: string };
+
 interface ToolSearchBarProps {
   onAddTool: (toolName: string, category?: string) => void;
   existingTools: Array<{name: string; category: string}>;
@@ -17,7 +24,7 @@ interface ToolSearchBarProps {
 
 export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existingTools }) => {
   const [query, setQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<ToolSuggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<UISuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,44 +33,36 @@ export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existin
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Fetch suggestions from API or fallback to local search
+  // Fetch suggestions from RPC or fallback to local search
   const fetchSuggestions = useCallback(async (searchQuery: string) => {
     try {
       setIsLoading(true);
 
-      const qs = new URLSearchParams({
-        q: searchQuery || '',
-        limit: '10',
-      }).toString();
+      const q = (searchQuery && searchQuery.length >= 2) ? searchQuery : '';
+      const { data, error } = await (supabase as any).rpc('search_tools', { q, lim: 10 });
 
-      const { data, error } = await supabase.functions.invoke(`search-tools?${qs}`);
+      if (error) throw error;
 
-      if (error) {
-        console.warn('API search failed, using local fallback:', error);
-        const newSuggestions = getToolSuggestions(searchQuery, 8);
-        const filteredSuggestions = newSuggestions.filter(suggestion =>
-          !existingTools.some(tool =>
-            tool.name.toLowerCase() === suggestion.name.toLowerCase()
-          )
-        );
-        setSuggestions(filteredSuggestions);
-        return;
-      }
+      const apiSuggestions: UISuggestion[] = Array.isArray(data)
+        ? data.map((row: any) => ({
+            id: row.id ?? row.name?.toLowerCase().replace(/\s+/g, '-'),
+            name: row.name,
+            category: row.category,
+            description: row.description ?? '',
+            domain: row.domain ?? undefined,
+            logoUrl: row.domain ? brandfetchLogo(row.domain) : undefined,
+          }))
+        : [];
 
-      const apiSuggestions = (data?.tools || []) as ToolSuggestion[];
-      const filteredSuggestions = apiSuggestions.filter((suggestion: ToolSuggestion) =>
-        !existingTools.some(tool =>
-          tool.name.toLowerCase() === suggestion.name.toLowerCase()
-        )
+      const filteredSuggestions = apiSuggestions.filter((suggestion: UISuggestion) =>
+        !existingTools.some(tool => tool.name.toLowerCase() === suggestion.name.toLowerCase())
       );
       setSuggestions(filteredSuggestions);
     } catch (error) {
-      console.warn('API search error, using local fallback:', error);
-      const newSuggestions = getToolSuggestions(searchQuery, 8);
+      console.warn('RPC search failed, using local fallback:', error);
+      const newSuggestions = getToolSuggestions(searchQuery, 8) as UISuggestion[];
       const filteredSuggestions = newSuggestions.filter(suggestion =>
-        !existingTools.some(tool =>
-          tool.name.toLowerCase() === suggestion.name.toLowerCase()
-        )
+        !existingTools.some(tool => tool.name.toLowerCase() === suggestion.name.toLowerCase())
       );
       setSuggestions(filteredSuggestions);
     } finally {
@@ -163,7 +162,7 @@ export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existin
     }
     acc[suggestion.category].push(suggestion);
     return acc;
-  }, {} as Record<string, ToolSuggestion[]>);
+  }, {} as Record<string, UISuggestion[]>);
 
   return (
     <div ref={containerRef} className="relative w-full max-w-2xl mx-auto">
@@ -239,9 +238,9 @@ export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existin
                             >
                               <div className="flex items-center justify-between w-full">
                                 <div className="flex items-center space-x-3">
-                                  {suggestion.logoUrl ? (
+                                  {(suggestion.domain || suggestion.logoUrl) ? (
                                     <img
-                                      src={suggestion.logoUrl}
+                                      src={suggestion.domain ? brandfetchLogo(suggestion.domain) : suggestion.logoUrl!}
                                       alt={`${suggestion.name} logo`}
                                       className="h-8 w-8 rounded border object-contain p-1"
                                       loading="lazy"
