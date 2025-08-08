@@ -28,8 +28,8 @@ const App = () => {
                 <Route path="/" element={<Index />} />
                 <Route path="/mapper" element={<Mapper />} />
                 <Route path="/add-tools" element={<AddTools />} />
-                <Route path="/tech-map" element={<UnifiedTechMap />} />
-                <Route path="/legacy-tech-map" element={<TechMap />} />
+                <Route path="/tech-map" element={<TechMap />} />
+                <Route path="/legacy-tech-map" element={<UnifiedTechMap />} />
                 <Route path="/consolidation" element={<ConsolidationSuggestions />} />
                 <Route path="/generate-map" element={<GenerateMap />} />
                 <Route path="/qa-check" element={<QACheck />} />

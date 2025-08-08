@@ -1,264 +1,84 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Download, LayoutGrid, Network, Lightbulb } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useTools } from "@/contexts/ToolsContext";
-import { getCategoryConfig } from "@/lib/categories";
-import {
-  ReactFlow,
-  MiniMap,
-  Controls,
-  Background,
-  useNodesState,
-  useEdgesState,
-  Node,
-  Edge,
-} from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
+import React, { useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft, Map } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { SEO } from '@/components/SEO';
+import { useTools } from '@/contexts/ToolsContext';
+import { MapGraphProvider, useMapGraph, CATEGORY_LANES } from '@/contexts/MapGraphContext';
+import { ReactFlow, Background, Controls, MiniMap } from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+import ToolNode from '@/components/nodes/ToolNode';
+import LaneNode from '@/components/nodes/LaneNode';
 
-const TechMap = () => {
+const FlowInner: React.FC = () => {
+  const { nodes, edges } = useMapGraph();
+  const nodeTypes = useMemo(() => ({ toolNode: ToolNode, laneNode: LaneNode }), []);
+
+  return (
+    <Card className="h-[80vh]">
+      <CardContent className="p-0 h-full">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          fitView
+          proOptions={{ hideAttribution: true }}
+          style={{ backgroundColor: 'hsl(var(--background))' }}
+        >
+          <MiniMap zoomable pannable style={{ backgroundColor: 'hsl(var(--card))' }} />
+          <Controls />
+          <Background />
+        </ReactFlow>
+      </CardContent>
+    </Card>
+  );
+};
+
+const TechMapPage: React.FC = () => {
   const { tools } = useTools();
-  const [isGridView, setIsGridView] = useState(true);
-
-  // Sample data for demo
-  const sampleTools = [
-    { id: '1', name: 'Salesforce', category: 'Sales', confirmedCategory: 'Sales', description: 'Customer relationship management' },
-    { id: '2', name: 'HubSpot', category: 'Marketing', confirmedCategory: 'Marketing', description: 'Inbound marketing and sales platform' },
-    { id: '3', name: 'Zendesk', category: 'Service', confirmedCategory: 'Service', description: 'Customer service platform' },
-    { id: '4', name: 'Pipedrive', category: 'Sales', confirmedCategory: 'Sales', description: 'Sales pipeline management' },
-    { id: '5', name: 'Mailchimp', category: 'Marketing', confirmedCategory: 'Marketing', description: 'Email marketing automation' },
-    { id: '6', name: 'Intercom', category: 'Service', confirmedCategory: 'Service', description: 'Customer messaging platform' },
-    { id: '7', name: 'Outreach', category: 'Sales', confirmedCategory: 'Sales', description: 'Sales engagement platform' },
-    { id: '8', name: 'Pardot', category: 'Marketing', confirmedCategory: 'Marketing', description: 'B2B marketing automation' },
-    { id: '9', name: 'Freshdesk', category: 'Service', confirmedCategory: 'Service', description: 'Customer support software' },
-    { id: '10', name: 'LinkedIn Sales Navigator', category: 'Sales', confirmedCategory: 'Sales', description: 'Social selling platform' },
-    { id: '11', name: 'Google Analytics', category: 'Marketing', confirmedCategory: 'Marketing', description: 'Web analytics service' },
-    { id: '12', name: 'Slack', category: 'Service', confirmedCategory: 'Service', description: 'Team communication platform' }
-  ];
-
-  // Use sample data if no tools are loaded
-  const displayTools = tools.length > 0 ? tools : sampleTools;
-
-  // Categorize tools dynamically by all categories present
-  const categorizedTools = displayTools.reduce((acc, tool) => {
-    const effectiveCategory = tool.confirmedCategory || tool.category;
-    if (!acc[effectiveCategory]) {
-      acc[effectiveCategory] = [];
-    }
-    acc[effectiveCategory].push(tool);
-    return acc;
-  }, {} as Record<string, (typeof displayTools)[0][]>);
-
-  // Create nodes and edges for diagram view
-  const createDiagramData = () => {
-    const nodes: Node[] = [];
-    const edges: Edge[] = [];
-    let yOffset = 0;
-
-    Object.entries(categorizedTools).forEach(([category, categoryTools], categoryIndex) => {
-      const config = getCategoryConfig(category);
-      
-      // Category node
-      nodes.push({
-        id: `category-${category}`,
-        type: 'default',
-        position: { x: 200, y: yOffset },
-        data: { label: category },
-        style: {
-          background: `hsl(var(--primary))`,
-          color: 'white',
-          border: '2px solid hsl(var(--primary))',
-          borderRadius: '12px',
-          fontWeight: 'bold',
-          width: 120,
-          height: 60,
-        },
-      });
-
-      // Tool nodes for this category
-      categoryTools.forEach((tool, toolIndex) => {
-        const toolNodeId = `tool-${tool.id}`;
-        nodes.push({
-          id: toolNodeId,
-          type: 'default',
-          position: { 
-            x: 400 + (toolIndex % 3) * 180, 
-            y: yOffset + Math.floor(toolIndex / 3) * 80 
-          },
-          data: { label: tool.name },
-          style: {
-            background: 'hsl(var(--card))',
-            border: '1px solid hsl(var(--border))',
-            borderRadius: '8px',
-            fontSize: '12px',
-            width: 160,
-            height: 50,
-          },
-        });
-
-        // Edge from category to tool
-        edges.push({
-          id: `edge-${category}-${tool.id}`,
-          source: `category-${category}`,
-          target: toolNodeId,
-          type: 'smoothstep',
-          style: { stroke: 'hsl(var(--primary))' },
-        });
-      });
-
-      yOffset += Math.max(150, Math.ceil(categoryTools.length / 3) * 80 + 100);
-    });
-
-    return { nodes, edges };
-  };
-
-  const { nodes: initialNodes, edges: initialEdges } = createDiagramData();
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-
-  const handleExportPDF = () => {
-    console.log('Exporting PDF...');
-    window.print();
-  };
+  const total = tools.length;
+  const categoriesUsed = new Set(tools.map(t => (t.confirmedCategory || t.category))).size;
 
   return (
     <>
       <SEO
         title="Tech Map | Tech Stack Mapper"
-        description="Visualize your tech stack as cards or a network diagram. Export and explore categories."
-        path="/legacy-tech-map"
+        description="Visualize your tools across categories in a swimlane tech map."
+        path="/tech-map"
       />
       <main className="min-h-screen bg-gradient-to-br from-background via-background to-secondary" id="main-content">
         <div className="container mx-auto px-4 py-8">
-        <header className="mb-8" aria-labelledby="page-title">
-          <Link to="/add-tools" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-4 transition-colors">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Add Tools
-          </Link>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 id="page-title" className="text-4xl font-bold text-foreground mb-2">Your Tech Map</h1>
-              <p className="text-muted-foreground text-lg">
-                {displayTools.length} tools across {Object.values(categorizedTools).filter(cat => cat.length > 0).length} categories
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              {/* View Toggle */}
-              <div className="flex items-center space-x-3">
-                <LayoutGrid className="w-4 h-4 text-muted-foreground" />
-                <Switch
-                  checked={isGridView}
-                  onCheckedChange={setIsGridView}
-                />
-                <Network className="w-4 h-4 text-muted-foreground" />
+          <header className="mb-6" aria-labelledby="page-title">
+            <Link to="/add-tools" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-4 transition-colors">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Add Tools
+            </Link>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 id="page-title" className="text-3xl font-bold text-foreground">Tech Map</h1>
+                <p className="text-sm text-muted-foreground">{total} tools across {categoriesUsed} lanes</p>
               </div>
-              <Button onClick={handleExportPDF} variant="outline">
-                <Download className="w-4 h-4 mr-2" />
-                Export PDF
-              </Button>
+              <div className="hidden sm:flex items-center gap-2 text-muted-foreground">
+                <Map className="w-4 h-4" />
+                <span className="text-xs">Lanes: {CATEGORY_LANES.length}</span>
+              </div>
             </div>
+          </header>
+
+          <MapGraphProvider>
+            <FlowInner />
+          </MapGraphProvider>
+
+          <div className="mt-4 flex justify-center">
+            <Link to="/consolidation">
+              <Button variant="secondary">Next: Consolidation Ideas</Button>
+            </Link>
           </div>
-        </header>
-
-        {/* Content */}
-        {isGridView ? (
-          /* Card View */
-          <div className="space-y-8">
-            {Object.entries(categorizedTools).map(([category, categoryTools]) => {
-              if (categoryTools.length === 0) return null;
-              
-              const config = getCategoryConfig(category);
-              const IconComponent = config.icon;
-
-              return (
-                <div key={category} className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${config.color}`}>
-                      <IconComponent className="w-6 h-6 text-white" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-foreground">{category}</h2>
-                    <Badge variant="secondary" className="ml-2">
-                      {categoryTools.length} tool{categoryTools.length !== 1 ? 's' : ''}
-                    </Badge>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {categoryTools.map((tool) => (
-                      <Card key={tool.id} className="hover:shadow-lg transition-shadow">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-md ${config.color}`}>
-                              <IconComponent className="w-4 h-4 text-white" />
-                            </div>
-                            <CardTitle className="text-lg">{tool.name}</CardTitle>
-                          </div>
-                        </CardHeader>
-                        {tool.description && (
-                          <CardContent className="pt-0">
-                            <p className="text-sm text-muted-foreground">
-                              {tool.description}
-                            </p>
-                          </CardContent>
-                        )}
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          /* Diagram View */
-          <Card className="h-[700px]">
-            <CardContent className="p-0 h-full">
-              <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                fitView
-                attributionPosition="bottom-left"
-                style={{ backgroundColor: "hsl(var(--background))" }}
-              >
-                <MiniMap 
-                  zoomable 
-                  pannable 
-                  style={{ backgroundColor: "hsl(var(--card))" }}
-                />
-                <Controls />
-                <Background />
-              </ReactFlow>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Action Buttons */}
-        <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-          <Link to="/add-tools">
-            <Button variant="outline" size="lg">
-              Edit Tools
-            </Button>
-          </Link>
-          <Link to="/consolidation">
-            <Button variant="secondary" size="lg">
-              <Lightbulb className="w-4 h-4 mr-2" />
-              Consolidation Ideas
-            </Button>
-          </Link>
-          <Link to="/generate-map">
-            <Button variant="hero" size="lg">
-              Generate Advanced Map
-            </Button>
-          </Link>
         </div>
-      </div>
       </main>
     </>
   );
 };
 
-export default TechMap;
+export default TechMapPage;
