@@ -10,11 +10,13 @@ import { getCategoryConfig } from '@/lib/categories';
 import { supabase } from '@/integrations/supabase/client';
 import { ToolSuggestionDialog } from '@/components/ToolSuggestionDialog';
 
-// Brandfetch Logo CDN (public). Set your client ID if available; optional.
+// Types for Supabase RPC response
+type SearchToolsRow = { name: string; domain: string | null; category: string; description: string | null };
+
+// Brandfetch Logo CDN (public). Client ID is optional in frontend
 const BRANDFETCH_CLIENT_ID = '';
 const brandfetchLogo = (domain: string) =>
   `https://cdn.brandfetch.io/${domain}${BRANDFETCH_CLIENT_ID ? `?c=${BRANDFETCH_CLIENT_ID}` : ''}`;
-
 type UISuggestion = ToolSuggestion & { domain?: string };
 
 interface ToolSearchBarProps {
@@ -43,9 +45,10 @@ export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existin
 
       if (error) throw error;
 
-      const apiSuggestions: UISuggestion[] = Array.isArray(data)
-        ? data.map((row: any) => ({
-            id: row.id ?? row.name?.toLowerCase().replace(/\s+/g, '-'),
+      const rows = (data || []) as SearchToolsRow[];
+      const apiSuggestions: UISuggestion[] = Array.isArray(rows)
+        ? rows.map((row) => ({
+            id: row.name?.toLowerCase().replace(/\s+/g, '-'),
             name: row.name,
             category: row.category,
             description: row.description ?? '',
