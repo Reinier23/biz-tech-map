@@ -1,7 +1,7 @@
 project_id = "cowigwginfqahgwzrrql"
 
 [functions.processSuggestions]
-verify_jwt = false
+verify_jwt = true
 
 [functions.enrichToolData]
-verify_jwt = false
+verify_jwt = true

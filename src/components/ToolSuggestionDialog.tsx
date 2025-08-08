@@ -31,11 +31,30 @@ export const ToolSuggestionDialog: React.FC<ToolSuggestionDialogProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!toolName.trim()) {
+    const cleaned = toolName.trim();
+
+    if (!cleaned) {
       toast({
         title: "Tool name required",
         description: "Please enter a tool name before submitting.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (cleaned.length > 120) {
+      toast({
+        title: "Name too long",
+        description: "Please keep the tool name under 120 characters.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!/^[A-Za-z0-9][A-Za-z0-9 .+_/()&'-]{0,119}$/.test(cleaned)) {
+      toast({
+        title: "Invalid characters",
+        description: "Use letters, numbers, spaces and basic punctuation only.",
         variant: "destructive"
       });
       return;
@@ -47,7 +66,7 @@ export const ToolSuggestionDialog: React.FC<ToolSuggestionDialogProps> = ({
       const { error } = await supabase
         .from('tool_suggestions')
         .insert({
-          name: toolName.trim()
+          name: cleaned
         });
 
       if (error) {

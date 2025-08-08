@@ -321,11 +321,32 @@ serve(async (req) => {
       }
     }
 
-    // Initialize Supabase client
+    // Initialize Supabase clients and auth
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const brandfetchClientId = Deno.env.get('BRANDFETCH_CLIENT_ID');
     
+    const authHeader = req.headers.get('Authorization') || '';
+    const isServiceRoleCall = authHeader === `Bearer ${supabaseKey}`;
+    if (!isServiceRoleCall) {
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const userClient = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: authHeader } } });
+      const { data: userData, error: userErr } = await userClient.auth.getUser();
+      const userId = userData?.user?.id;
+      if (userErr || !userId) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const adminCheck = createClient(supabaseUrl, supabaseKey);
+      const { data: roles } = await adminCheck.from('user_roles').select('role').eq('user_id', userId).eq('role', 'admin').limit(1);
+      const isAdmin = Array.isArray(roles) && roles.length > 0;
+      if (!isAdmin) {
+        return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
+
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     console.log(`Starting to process suggestions with limit: ${limit}`);
