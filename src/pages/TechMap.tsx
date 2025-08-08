@@ -10,6 +10,7 @@ import { ReactFlow, Background, Controls, MiniMap } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import ToolNode from '@/components/nodes/ToolNode';
 import LaneNode from '@/components/nodes/LaneNode';
+import ChatCoach from '@/components/ChatCoach';
 
 const FlowInner: React.FC = () => {
   const { nodes, edges } = useMapGraph();
@@ -67,7 +68,12 @@ const TechMapPage: React.FC = () => {
           </header>
 
           <MapGraphProvider>
-            <FlowInner />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="lg:col-span-2">
+                <FlowInner />
+              </div>
+              <ChatCoach />
+            </div>
           </MapGraphProvider>
 
           <div className="mt-4 flex justify-center">

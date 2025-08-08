@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      category_playbooks: {
+        Row: {
+          category: string
+          must_have: boolean
+          suggestions: string[]
+        }
+        Insert: {
+          category: string
+          must_have?: boolean
+          suggestions?: string[]
+        }
+        Update: {
+          category?: string
+          must_have?: boolean
+          suggestions?: string[]
+        }
+        Relationships: []
+      }
       integrations_catalog: {
         Row: {
           relation_type: string | null
@@ -168,6 +186,13 @@ export type Database = {
       citextsend: {
         Args: { "": string }
         Returns: string
+      }
+      get_gap_questions: {
+        Args: { tools_in: string[] }
+        Returns: {
+          category: string
+          suggestions: string[]
+        }[]
       }
       get_integrations: {
         Args: { a: string }
