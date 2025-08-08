@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState, ReactNo
 import type { Node, Edge } from '@xyflow/react';
 import dagre from 'dagre';
 import { useTools } from '@/contexts/ToolsContext';
+import { supabase } from '@/integrations/supabase/client';
 
 // Category lanes in fixed order
 export const CATEGORY_LANES: string[] = [
@@ -67,7 +68,6 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
   const layout = useMemo(() => {
     return () => {
       const newNodes: Node[] = [];
-      const newEdges: Edge[] = [];
 
       let currentY = 0;
 
@@ -130,9 +130,56 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
       });
 
       setNodes(newNodes);
-      setEdges(newEdges);
+
+      // Build integrations edges asynchronously
+      const nameToId = new Map<string, string>();
+      tools.forEach((t) => nameToId.set(t.name, t.id));
+
+      (async () => {
+        try {
+          const calls = tools.map((t) => (supabase as any).rpc('get_integrations', { a: t.name }));
+          const results = await Promise.all(calls);
+
+          const edgeMap = new Map<string, Edge>();
+
+          results.forEach((res: any) => {
+            if (res?.error || !res?.data) return;
+            (res.data as Array<{ source: string; target: string; relation_type: string }>).forEach((row) => {
+              let srcName = row.source;
+              let tgtName = row.target;
+              const rel = row.relation_type as string;
+
+              // For syncs, treat as undirected and canonicalize to avoid duplicates
+              if (rel === 'syncs') {
+                const [aName, bName] = [srcName, tgtName].sort((a, b) => a.localeCompare(b));
+                srcName = aName;
+                tgtName = bName;
+              }
+
+              const srcId = nameToId.get(srcName);
+              const tgtId = nameToId.get(tgtName);
+              if (!srcId || !tgtId) return; // only draw when both tools exist
+
+              const edgeId = rel === 'syncs' ? `${srcName}<->${tgtName}` : `${srcName}->${tgtName}`;
+              if (edgeMap.has(edgeId)) return;
+
+              edgeMap.set(edgeId, {
+                id: edgeId,
+                source: `tool-${srcId}`,
+                target: `tool-${tgtId}`,
+                label: rel,
+                type: 'smoothstep',
+              });
+            });
+          });
+
+          setEdges(Array.from(edgeMap.values()));
+        } catch (err) {
+          console.error('[integrations] error building edges', err);
+        }
+      })();
     };
-  }, [categorized]);
+  }, [categorized, tools]);
 
   useEffect(() => {
     layout();
