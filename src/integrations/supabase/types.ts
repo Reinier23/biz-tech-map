@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      integrations_catalog: {
+        Row: {
+          relation_type: string | null
+          tool_a: string | null
+          tool_b: string | null
+        }
+        Insert: {
+          relation_type?: string | null
+          tool_a?: string | null
+          tool_b?: string | null
+        }
+        Update: {
+          relation_type?: string | null
+          tool_a?: string | null
+          tool_b?: string | null
+        }
+        Relationships: []
+      }
       tool_suggestions: {
         Row: {
           id: string
@@ -129,6 +147,14 @@ export type Database = {
       citextsend: {
         Args: { "": string }
         Returns: string
+      }
+      get_integrations: {
+        Args: { a: string }
+        Returns: {
+          source: string
+          target: string
+          relation_type: string
+        }[]
       }
       search_tools: {
         Args: { q: string; lim?: number }
