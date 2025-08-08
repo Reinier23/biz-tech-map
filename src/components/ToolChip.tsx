@@ -1,8 +1,10 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { X, CheckCircle } from 'lucide-react';
+import ConfidenceBadge from '@/components/ConfidenceBadge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { getCategoryConfig } from '@/lib/categories';
+import { X } from 'lucide-react';
 
 interface Tool {
   id: string;
@@ -50,19 +52,17 @@ export const ToolChip: React.FC<ToolChipProps> = ({ tool, onRemove }) => {
       </Badge>
       
       {/* Confidence Indicator */}
-      {isEnriched && (
+      {isEnriched ? (
         <div className="flex items-center gap-1">
-          {tool.confidence && tool.confidence >= 80 && (
-            <CheckCircle className="h-3 w-3 text-green-600" />
-          )}
+          <ConfidenceBadge confidence={tool.confidence} />
           {hasManualCategory && (
-            <span className="text-xs text-muted-foreground" title="Category manually updated">
-              ✓
-            </span>
+            <span className="text-xs text-muted-foreground" title="Category manually updated">✓</span>
           )}
         </div>
+      ) : (
+        <Skeleton className="h-3 w-12" aria-label="Enriching..." />
       )}
-      
+
       {/* Remove Button */}
       <Button
         variant="ghost"

@@ -13,6 +13,7 @@ import { ToolBucket } from '@/components/ToolBucket';
 import { supabase } from '@/integrations/supabase/client';
 import { defaultCategories } from '@/lib/categories';
 import { SEO } from '@/components/SEO';
+import { BulkAddPanel } from '@/components/BulkAddPanel';
 
 interface Tool {
   id: string;
@@ -204,6 +205,9 @@ if (enrichedData) {
               onAddTool={handleAddTool}
               existingTools={tools.map(tool => ({ name: tool.name, category: tool.category }))}
             />
+
+            {/* Bulk Add Panel */}
+            <BulkAddPanel onAddTool={handleAddTool} />
 
             {/* Tool Bucket */}
             <ToolBucket 
