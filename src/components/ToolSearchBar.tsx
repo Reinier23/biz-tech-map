@@ -9,14 +9,12 @@ import { getToolSuggestions, ToolSuggestion } from '@/lib/toolSuggestions';
 import { getCategoryConfig } from '@/lib/categories';
 import { supabase } from '@/integrations/supabase/client';
 import { ToolSuggestionDialog } from '@/components/ToolSuggestionDialog';
+import { brandfetchLogo } from '@/lib/utils';
 
 // Types for Supabase RPC response
 type SearchToolsRow = { name: string; domain: string | null; category: string; description: string | null };
 
-// Brandfetch Logo CDN (public). Client ID is optional in frontend
-const BRANDFETCH_CLIENT_ID = '';
-const brandfetchLogo = (domain: string) =>
-  `https://cdn.brandfetch.io/${domain}${BRANDFETCH_CLIENT_ID ? `?c=${BRANDFETCH_CLIENT_ID}` : ''}`;
+// Brandfetch logo helper imported from utils
 type UISuggestion = ToolSuggestion & { domain?: string };
 
 interface ToolSearchBarProps {
@@ -46,17 +44,18 @@ export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existin
       if (error) throw error;
 
       const rows = (data || []) as SearchToolsRow[];
-      const apiSuggestions: UISuggestion[] = Array.isArray(rows)
-        ? rows.map((row) => ({
-            id: row.name?.toLowerCase().replace(/\s+/g, '-'),
-            name: row.name,
-            category: row.category,
-            description: row.description ?? '',
-            domain: row.domain ?? undefined,
-            logoUrl: row.domain ? brandfetchLogo(row.domain) : undefined,
-          }))
-        : [];
-
+const apiSuggestions: UISuggestion[] = Array.isArray(rows)
+  ? rows.map((row) => ({
+      id: row.domain ?? row.name?.toLowerCase().replace(/\s+/g, '-'),
+      name: row.name,
+      category: row.category,
+      description: row.description ?? '',
+      domain: row.domain ?? undefined,
+      logoUrl: row.domain ? brandfetchLogo(row.domain) : undefined,
+    }))
+  : [];
+console.log('[ToolSearchBar] RPC rows:', rows);
+console.log('[ToolSearchBar] Mapped suggestions:', apiSuggestions);
       const filteredSuggestions = apiSuggestions.filter((suggestion: UISuggestion) =>
         !existingTools.some(tool => tool.name.toLowerCase() === suggestion.name.toLowerCase())
       );
@@ -242,11 +241,15 @@ export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existin
                               <div className="flex items-center justify-between w-full">
                                 <div className="flex items-center space-x-3">
                                   {(suggestion.domain || suggestion.logoUrl) ? (
-                                    <img
+<img
                                       src={suggestion.domain ? brandfetchLogo(suggestion.domain) : suggestion.logoUrl!}
-                                      alt={`${suggestion.name} logo`}
-                                      className="h-8 w-8 rounded border object-contain p-1"
+                                      alt={suggestion.name}
+                                      className="w-6 h-6 rounded-full"
                                       loading="lazy"
+                                      onError={(e) => {
+                                        e.currentTarget.onerror = null;
+                                        e.currentTarget.src = '/placeholder.svg';
+                                      }}
                                     />
                                   ) : (
                                     <div className="h-8 w-8 rounded border flex items-center justify-center text-muted-foreground">
