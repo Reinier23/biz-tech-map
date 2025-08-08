@@ -130,6 +130,15 @@ export type Database = {
         Args: { "": string }
         Returns: string
       }
+      search_tools: {
+        Args: { q: string; lim?: number }
+        Returns: {
+          name: string
+          domain: string
+          category: string
+          description: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
