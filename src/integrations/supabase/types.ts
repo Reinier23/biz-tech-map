@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          actor: string | null
+          details: Json
+          event_type: string
+          id: string
+          timestamp: string
+        }
+        Insert: {
+          actor?: string | null
+          details: Json
+          event_type: string
+          id?: string
+          timestamp?: string
+        }
+        Update: {
+          actor?: string | null
+          details?: Json
+          event_type?: string
+          id?: string
+          timestamp?: string
+        }
+        Relationships: []
+      }
       category_cost_fallbacks: {
         Row: {
           category: string

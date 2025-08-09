@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { logAudit } from '@/lib/audit';
 
 interface Tool {
   id: string;
@@ -46,6 +47,8 @@ export const ToolsProvider: React.FC<ToolsProviderProps> = ({ children, initialT
   const addTool = (tool: Tool) => {
     if (readOnly) return;
     setToolsState(prev => [...prev, tool]);
+    // Fire-and-forget audit
+    void logAudit('tool_added', { id: tool.id, name: tool.name, category: tool.category }).catch(() => {});
   };
 
   const updateTool = (id: string, updatedTool: Partial<Tool>) => {
@@ -58,6 +61,8 @@ export const ToolsProvider: React.FC<ToolsProviderProps> = ({ children, initialT
   const removeTool = (id: string) => {
     if (readOnly) return;
     setToolsState(prev => prev.filter(tool => tool.id !== id));
+    const removed = tools.find(t => t.id === id);
+    void logAudit('tool_removed', { id, name: removed?.name, category: removed?.category }).catch(() => {});
   };
 
   const value: ToolsContextType = {

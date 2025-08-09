@@ -5,6 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Skeleton } from '@/components/ui/skeleton';
 import { Brain, TrendingUp, AlertTriangle, CheckCircle, HelpCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { logAudit } from '@/lib/audit';
 
 interface Tool {
   id: string;
@@ -38,6 +39,12 @@ export const AISuggestionsPanel: React.FC<AISuggestionsPanelProps> = ({ tools, i
       analyzeSuggestions();
     }
   }, [isVisible, tools, hasAnalyzed]);
+
+  useEffect(() => {
+    if (isVisible) {
+      void logAudit('ai_suggestions_viewed', { toolsCount: tools.length }).catch(() => {});
+    }
+  }, [isVisible, tools.length]);
 
   const analyzeSuggestions = async () => {
     setIsLoading(true);

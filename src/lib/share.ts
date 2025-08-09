@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { logAudit } from "./audit";
 
 export async function createShare(payload: any): Promise<{ id: string }> {
   const { data, error } = await supabase
@@ -12,6 +13,8 @@ export async function createShare(payload: any): Promise<{ id: string }> {
     throw error;
   }
 
+  // Fire-and-forget audit log
+  void logAudit('share_created', { shareId: data.id }).catch(() => {});
   return { id: data.id };
 }
 

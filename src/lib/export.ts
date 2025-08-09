@@ -1,6 +1,8 @@
 // Lazy-loaded export utilities to keep initial bundle small
 // Note: Uses html-to-image for rasterization and jsPDF for PDFs
 
+import { logAudit } from './audit';
+
 export async function exportMapPNG(container: HTMLElement, filename = "tech-map.png") {
   try {
     const html2img = await import('html-to-image');
@@ -59,6 +61,7 @@ export async function exportMapPDF(container: HTMLElement, filename = "tech-map.
 
     doc.addImage(dataUrl, 'PNG', x, y, renderW, renderH);
     doc.save(filename);
+    try { await logAudit('export_pdf', { filename, companyName, scope: 'map' }); } catch {}
   } catch (err) {
     console.error('Export PDF failed', err);
     throw err;
@@ -101,6 +104,7 @@ export async function exportConsolidationPDF(container: HTMLElement, filename = 
 
     doc.addImage(dataUrl, 'PNG', x, y, renderW, renderH);
     doc.save(filename);
+    try { await logAudit('export_pdf', { filename, companyName, scope: 'consolidation' }); } catch {}
   } catch (err) {
     console.error('Export consolidation PDF failed', err);
     throw err;

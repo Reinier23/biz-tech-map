@@ -16,6 +16,7 @@ import { ToolsProvider } from "./contexts/ToolsContext";
 import { HelmetProvider } from "react-helmet-async";
 import Share from "./pages/Share";
 import Settings from "./pages/Settings";
+import Audit from "./pages/Audit";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => {
                 <Route path="/qa-check" element={<QACheck />} />
                 <Route path="/share/:id" element={<Share />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/audit" element={<Audit />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
