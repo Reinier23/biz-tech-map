@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Download, Lightbulb, TrendingUp, AlertCircle, CheckCircle, RefreshCw } from "lucide-react";
+import { ArrowLeft, Download, Lightbulb, TrendingUp, AlertCircle, CheckCircle, RefreshCw, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTools } from "@/contexts/ToolsContext";
 import { toast } from "sonner";
@@ -12,6 +12,9 @@ import { SEO } from "@/components/SEO";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { computeOverlap } from "@/lib/overlap";
+import { Skeleton } from "@/components/ui/skeleton";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { resolveCostsBatch, CostInfo } from "@/hooks/useToolCosts";
 
 interface ConsolidationAnalysis {
   tool: {
@@ -31,6 +34,8 @@ const ConsolidationSuggestions = () => {
   const [analysisResults, setAnalysisResults] = useState<ConsolidationAnalysis[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [consolidatedView, setConsolidatedView] = useState(false);
+  const [costsByTool, setCostsByTool] = useState<Record<string, CostInfo>>({});
+  const [costsLoading, setCostsLoading] = useState(false);
 
   const analyzeToolsWithAI = async () => {
     if (tools.length === 0) return;
@@ -71,6 +76,28 @@ const ConsolidationSuggestions = () => {
     }
   }, [tools]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const fetchCosts = async () => {
+      if (tools.length === 0) {
+        setCostsByTool({});
+        return;
+      }
+      setCostsLoading(true);
+      const toolsWithConfirmedCategories = tools.map(t => ({
+        name: t.name,
+        category: t.confirmedCategory || t.category,
+      }));
+      const results = await resolveCostsBatch(toolsWithConfirmedCategories);
+      if (!cancelled) {
+        setCostsByTool(results);
+        setCostsLoading(false);
+      }
+    };
+    fetchCosts();
+    return () => { cancelled = true; };
+  }, [tools]);
+
   const replaceCount = analysisResults.filter(a => a.recommendation === "Replace").length;
   const evaluateCount = analysisResults.filter(a => a.recommendation === "Evaluate").length;
   const visibleResults = consolidatedView
@@ -83,6 +110,7 @@ const ConsolidationSuggestions = () => {
       description: t.description || ""
     }))
   );
+  const estimatedSpend = Object.values(costsByTool).reduce((sum, ci) => sum + (typeof ci?.cost_mo === 'number' ? ci.cost_mo : 0), 0);
 
   const getActionBadge = (action: string) => {
     switch (action) {
@@ -197,7 +225,7 @@ const ConsolidationSuggestions = () => {
 
         {/* Summary Cards */}
         {analysisResults.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
@@ -226,12 +254,25 @@ const ConsolidationSuggestions = () => {
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Potential Savings</p>
                     <p className="text-3xl font-bold text-primary">
-                      ${(replaceCount * 120 + evaluateCount * 50).toLocaleString()}
+                      ${ (replaceCount * 120 + evaluateCount * 50).toLocaleString() }
                     </p>
                   </div>
                   <Lightbulb className="w-8 h-8 text-primary" />
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">Est. monthly savings</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Estimated Monthly Spend</p>
+                    <p className="text-3xl font-bold text-foreground">
+                      ${ estimatedSpend.toLocaleString() }
+                    </p>
+                  </div>
+                  <Info className="w-8 h-8 text-muted-foreground" />
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -277,6 +318,21 @@ const ConsolidationSuggestions = () => {
                   <TableRow>
                     <TableHead>Tool</TableHead>
                     <TableHead>Category</TableHead>
+                    <TableHead>
+                      <div className="inline-flex items-center gap-1">
+                        Est. Monthly Cost
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span><Info className="w-4 h-4 text-muted-foreground" /></span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Uses tool defaults when known; otherwise a category fallback. Configure in Settings later.
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </TableHead>
                     <TableHead>AI Recommendation</TableHead>
                     <TableHead>AI Reasoning</TableHead>
                   </TableRow>
@@ -307,6 +363,26 @@ const ConsolidationSuggestions = () => {
                         <Badge variant="outline">{analysis.tool.confirmedCategory || analysis.tool.category}</Badge>
                       </TableCell>
                       <TableCell>
+                        {costsLoading ? (
+                          <Skeleton className="h-4 w-24" />
+                        ) : (() => {
+                          const c = costsByTool[analysis.tool.name.toLowerCase()];
+                          if (c && c.cost_mo != null) {
+                            return (
+                              <div>
+                                <div>${c.cost_mo.toLocaleString()}</div>
+                                {(c.cost_basis || c.source) && (
+                                  <div className="text-xs text-muted-foreground">
+                                    {c.cost_basis ?? ''}{c.cost_basis && c.source ? ' • ' : ''}{c.source ?? ''}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }
+                          return <span>—</span>;
+                        })()}
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-2">
                           {getActionIcon(analysis.recommendation)}
                           {getActionBadge(analysis.recommendation)}
@@ -319,6 +395,7 @@ const ConsolidationSuggestions = () => {
                   ))}
                 </TableBody>
               </Table>
+              <p className="text-xs text-muted-foreground mt-3">Estimates only. Actual pricing varies by seats, tiers, and usage.</p>
             </CardContent>
           </Card>
         )}
