@@ -159,6 +159,7 @@ const LandingPage = () => {
             <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">How it works</a>
             <a href="#integrations" className="text-muted-foreground hover:text-foreground transition-colors">Integrations</a>
             <a href="#faq" className="text-muted-foreground hover:text-foreground transition-colors">FAQ</a>
+            <Link to="/settings" className="text-muted-foreground hover:text-foreground transition-colors">Settings</Link>
           </nav>
           <a href="#pricing" className="hidden md:block">
             <Button className="px-4">Get Early Access</Button>

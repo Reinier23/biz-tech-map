@@ -15,6 +15,7 @@ import NotFound from "./pages/NotFound";
 import { ToolsProvider } from "./contexts/ToolsContext";
 import { HelmetProvider } from "react-helmet-async";
 import Share from "./pages/Share";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -31,12 +32,13 @@ const App = () => {
                 <Route path="/add-tools" element={<AddTools />} />
                 <Route path="/tech-map" element={<TechMap />} />
                 <Route path="/legacy-tech-map" element={<UnifiedTechMap />} />
-<Route path="/consolidation" element={<Consolidation />} />
-<Route path="/generate-map" element={<GenerateMap />} />
-<Route path="/qa-check" element={<QACheck />} />
-<Route path="/share/:id" element={<Share />} />
-{/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-<Route path="*" element={<NotFound />} />
+                <Route path="/consolidation" element={<Consolidation />} />
+                <Route path="/generate-map" element={<GenerateMap />} />
+                <Route path="/qa-check" element={<QACheck />} />
+                <Route path="/share/:id" element={<Share />} />
+                <Route path="/settings" element={<Settings />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
               </Routes>
               <Toaster />
               <Sonner />

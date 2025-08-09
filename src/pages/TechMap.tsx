@@ -120,6 +120,7 @@ const TechMapPage: React.FC = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <Button variant="outline" size="sm" onClick={handleCreateShare}>Create Share Link</Button>
+                <Link to="/settings"><Button variant="ghost" size="sm">Settings</Button></Link>
               </div>
             </div>
           </header>

@@ -40,6 +40,8 @@ export const useMapGraph = () => {
 
 interface Props { children: ReactNode }
 
+type LaneSettings = { labels?: Record<string, string>; colors?: Record<string, string> };
+
 const NODE_WIDTH = 200;
 const NODE_HEIGHT = 72;
 const GRAPH_NODE_SEP = 40;
@@ -52,7 +54,22 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
   const { tools } = useTools();
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
+  const [laneSettings, setLaneSettings] = useState<LaneSettings>({});
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('ui_settings')
+          .select('value')
+          .eq('key', 'lanes')
+          .maybeSingle();
+        if (data?.value) setLaneSettings(data.value as LaneSettings);
+      } catch (e) {
+        console.error('[ui_settings] fetch failed', e);
+      }
+    })();
+  }, []);
   const categorized = useMemo(() => {
     const buckets: Record<string, typeof tools> = {};
     CATEGORY_LANES.forEach((c) => (buckets[c] = []));
@@ -119,7 +136,12 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
           id: `lane-${category}`,
           type: 'laneNode',
           position: { x: 0, y: currentY },
-          data: { label: category, width: CANVAS_WIDTH, height: laneHeight },
+          data: { 
+            label: laneSettings.labels?.[category] ?? category,
+            width: CANVAS_WIDTH, 
+            height: laneHeight,
+            color: laneSettings.colors?.[category]
+          },
           draggable: false,
           selectable: false,
         });
@@ -179,11 +201,11 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
         }
       })();
     };
-  }, [categorized, tools]);
+  }, [categorized, tools, laneSettings]);
 
   useEffect(() => {
     layout();
-  }, [layout, tools]);
+  }, [layout, tools, laneSettings]);
 
   const value: MapGraphContextType = {
     nodes,

@@ -38,9 +38,9 @@ interface ToolsProviderProps {
 export const ToolsProvider: React.FC<ToolsProviderProps> = ({ children, initialTools, readOnly }) => {
   const [tools, setToolsState] = useState<Tool[]>(initialTools || []);
 
-  const setTools = (next: Tool[] | ((prev: Tool[]) => Tool[])) => {
+  const setTools = (next: Tool[]) => {
     if (readOnly) return;
-    setToolsState(typeof next === 'function' ? (next as (prev: Tool[]) => Tool[])(tools) : next);
+    setToolsState(next);
   };
 
   const addTool = (tool: Tool) => {
