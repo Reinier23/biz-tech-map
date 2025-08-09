@@ -9,6 +9,9 @@ import { useTools } from "@/contexts/ToolsContext";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { computeOverlap } from "@/lib/overlap";
 
 interface ConsolidationAnalysis {
   tool: {
@@ -27,6 +30,7 @@ const ConsolidationSuggestions = () => {
   const { tools } = useTools();
   const [analysisResults, setAnalysisResults] = useState<ConsolidationAnalysis[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [consolidatedView, setConsolidatedView] = useState(false);
 
   const analyzeToolsWithAI = async () => {
     if (tools.length === 0) return;
@@ -69,6 +73,16 @@ const ConsolidationSuggestions = () => {
 
   const replaceCount = analysisResults.filter(a => a.recommendation === "Replace").length;
   const evaluateCount = analysisResults.filter(a => a.recommendation === "Evaluate").length;
+  const visibleResults = consolidatedView
+    ? analysisResults.filter(a => a.recommendation === "Keep" || a.recommendation === "No Match")
+    : analysisResults;
+  const overlaps = computeOverlap(
+    tools.map(t => ({
+      name: t.name,
+      category: t.confirmedCategory || t.category,
+      description: t.description || ""
+    }))
+  );
 
   const getActionBadge = (action: string) => {
     switch (action) {
@@ -146,19 +160,25 @@ const ConsolidationSuggestions = () => {
                 {isLoading ? "Generating consolidation insights..." : `Analysis of ${tools.length} tools against HubSpot capabilities`}
               </p>
             </div>
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                onClick={analyzeToolsWithAI}
-                disabled={isLoading}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                {isLoading ? 'Analyzing...' : 'Refresh Analysis'}
-              </Button>
-              <Button variant="outline">
-                <Download className="w-4 h-4 mr-2" />
-                Export Report
-              </Button>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="consolidated-view" className="text-sm">Consolidated View</Label>
+                <Switch id="consolidated-view" checked={consolidatedView} onCheckedChange={setConsolidatedView} />
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={analyzeToolsWithAI}
+                  disabled={isLoading}
+                >
+                  <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                  {isLoading ? 'Analyzing...' : 'Refresh Analysis'}
+                </Button>
+                <Button variant="outline">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Report
+                </Button>
+              </div>
             </div>
           </div>
         </header>
@@ -217,6 +237,28 @@ const ConsolidationSuggestions = () => {
           </div>
         )}
 
+        {overlaps.length > 0 && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Overlaps Detected ({overlaps.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {overlaps.map(group => (
+                  <div key={group.subdomain} className="flex items-start gap-3">
+                    <Badge variant="outline">{group.subdomain}</Badge>
+                    <div className="flex flex-wrap gap-2">
+                      {group.tools.map((t) => (
+                        <Badge key={t.name} variant="secondary">{t.name}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Analysis Table */}
         {analysisResults.length > 0 && (
           <Card>
@@ -240,7 +282,7 @@ const ConsolidationSuggestions = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {analysisResults.map((analysis, index) => (
+                  {visibleResults.map((analysis, index) => (
                     <TableRow 
                       key={`${analysis.tool.name}-${index}`}
                       className={
