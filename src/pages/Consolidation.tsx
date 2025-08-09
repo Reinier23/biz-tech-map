@@ -14,6 +14,8 @@ import { resolveCostsBatch, type CostInfo } from "@/hooks/useToolCosts";
 import { analyzeStack, type AnalyzedItem } from "@/lib/ruleEngine";
 import { toast } from "sonner";
 import { exportConsolidationPDF } from "@/lib/export";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { DEBUG } from "@/lib/config";
 
 const currency = (n: number) => new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
 
@@ -56,11 +58,16 @@ const navigate = useNavigate();
   useEffect(() => {
     let active = true;
     const load = async () => {
+      if (DEBUG) console.debug('[Consolidation] Loading costs for tools:', toolsForAnalysis);
       setLoadingCosts(true);
       try {
         const res = await resolveCostsBatch(toolsForAnalysis);
-        if (active) setCosts(res);
+        if (active) {
+          setCosts(res);
+          if (DEBUG) console.debug('[Consolidation] Costs loaded:', res);
+        }
       } catch (e) {
+        console.error('[Consolidation] Failed to load costs:', e);
         // Fallback to empty costs
         if (active) setCosts({});
       } finally {
@@ -205,9 +212,12 @@ const companyName = 'Your Company';
 
 const handleExportReport = useCallback(async () => {
   if (!exportRef.current) return;
+  if (DEBUG) console.debug('[Consolidation] Exporting consolidation report');
   try {
     await exportConsolidationPDF(exportRef.current, 'Consolidation-Report.pdf', companyName);
+    if (DEBUG) console.debug('[Consolidation] Report export successful');
   } catch (e) {
+    console.error('[Consolidation] Report export failed:', e);
     toast.error('Failed to export report');
   }
 }, []);
@@ -224,40 +234,43 @@ return (
 
 <div ref={exportRef} className="grid grid-cols-1 lg:grid-cols-3 gap-4">
   <div className="lg:col-span-2 space-y-4">
-    {/* Summary Cards */}
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Estimated Monthly Spend</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loadingCosts ? (
-            <Skeleton className="h-8 w-32" />
-          ) : (
-            <div className="text-2xl font-semibold">{estimatedSpend > 0 ? currency(estimatedSpend) : "—"}</div>
-          )}
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Replace</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-semibold">{replaceCount}</div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Evaluate</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-semibold">{evaluateCount}</div>
-        </CardContent>
-      </Card>
-    </div>
+    <ErrorBoundary onError={(error) => console.error('[Consolidation] Summary cards error:', error)}>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Estimated Monthly Spend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingCosts ? (
+              <Skeleton className="h-8 w-32" />
+            ) : (
+              <div className="text-2xl font-semibold">{estimatedSpend > 0 ? currency(estimatedSpend) : "—"}</div>
+            )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Replace</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-semibold">{replaceCount}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Evaluate</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-semibold">{evaluateCount}</div>
+          </CardContent>
+        </Card>
+      </div>
+    </ErrorBoundary>
 
-    {/* Results Table */}
-    <Card>
+    <ErrorBoundary onError={(error) => console.error('[Consolidation] Results table error:', error)}>
+      {/* Results Table */}
+      <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">Analysis Results</CardTitle>
@@ -347,6 +360,7 @@ return (
         </Table>
       </CardContent>
     </Card>
+    </ErrorBoundary>
 
     <div className="flex justify-end">
       <Button onClick={() => setDrawerOpen(true)}>
@@ -355,8 +369,9 @@ return (
     </div>
   </div>
 
-  {/* Agent Loop Panel */}
-  <div className="space-y-4">
+  <ErrorBoundary onError={(error) => console.error('[Consolidation] Agent panel error:', error)}>
+    {/* Agent Loop Panel */}
+    <div className="space-y-4">
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-base">Agent Loop</CardTitle>
@@ -382,6 +397,7 @@ return (
       </CardContent>
     </Card>
   </div>
+  </ErrorBoundary>
 </div>
 
           {/* Diff Drawer */}

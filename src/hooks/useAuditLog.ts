@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { DEBUG } from "@/lib/config";
 
 export type AuditRow = {
   id: string;
@@ -17,6 +18,7 @@ export type AuditFilters = {
 };
 
 export async function fetchAudit(filters: AuditFilters): Promise<{ rows: AuditRow[]; total: number }> {
+  if (DEBUG) console.debug('[useAuditLog] Fetching audit with filters:', filters);
   const page = Math.max(1, filters.page ?? 1);
   const pageSize = Math.min(100, Math.max(1, filters.pageSize ?? 25));
   const fromIdx = (page - 1) * pageSize;
@@ -24,7 +26,10 @@ export async function fetchAudit(filters: AuditFilters): Promise<{ rows: AuditRo
 
   // Ensure user session present (RLS will also guard)
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { rows: [], total: 0 };
+  if (!user) {
+    if (DEBUG) console.debug('[useAuditLog] No user session');
+    return { rows: [], total: 0 };
+  }
 
   let query = supabase
     .from('audit_log')
@@ -50,6 +55,7 @@ export async function fetchAudit(filters: AuditFilters): Promise<{ rows: AuditRo
 
   const { data, error, count } = await query;
   if (error) throw error;
+  if (DEBUG) console.debug('[useAuditLog] Query result:', { rows: data?.length, total: count });
   return { rows: (data as AuditRow[]) ?? [], total: count ?? 0 };
 }
 

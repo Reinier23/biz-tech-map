@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
@@ -10,6 +10,7 @@ import { getCategoryConfig } from '@/lib/categories';
 import { supabase } from '@/integrations/supabase/client';
 import { ToolSuggestionDialog } from '@/components/ToolSuggestionDialog';
 import { brandfetchLogo } from '@/lib/utils';
+import { DEBUG } from '@/lib/config';
 
 // Types for Supabase RPC response
 type SearchToolsRow = { name: string; domain: string | null; category: string; description: string | null };
@@ -24,6 +25,7 @@ interface ToolSearchBarProps {
 
 export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existingTools }) => {
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [suggestions, setSuggestions] = useState<UISuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -33,8 +35,18 @@ export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existin
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Fetch suggestions from RPC or fallback to local search
+  // Debounce query updates
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query);
+      if (DEBUG) console.debug('[ToolSearchBar] Debounced query:', query);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  // Memoized fetch function to prevent recreation on every render
   const fetchSuggestions = useCallback(async (searchQuery: string) => {
+    if (DEBUG) console.debug('[ToolSearchBar] Fetching suggestions for:', searchQuery);
     try {
       setIsLoading(true);
 
@@ -53,9 +65,11 @@ const apiSuggestions: UISuggestion[] = Array.isArray(rows)
       domain: row.domain ?? undefined,
       logoUrl: row.domain ? brandfetchLogo(row.domain) : undefined,
     }))
-  : [];
-console.log('[ToolSearchBar] RPC rows:', rows);
-console.log('[ToolSearchBar] Mapped suggestions:', apiSuggestions);
+   : [];
+if (DEBUG) {
+  console.debug('[ToolSearchBar] RPC rows:', rows);
+  console.debug('[ToolSearchBar] Mapped suggestions:', apiSuggestions);
+}
       const filteredSuggestions = apiSuggestions.filter((suggestion: UISuggestion) =>
         !existingTools.some(tool => tool.name.toLowerCase() === suggestion.name.toLowerCase())
       );
@@ -72,11 +86,11 @@ console.log('[ToolSearchBar] Mapped suggestions:', apiSuggestions);
     }
   }, [existingTools]);
 
-  // Update suggestions when query changes
+  // Update suggestions when debounced query changes
   useEffect(() => {
-    fetchSuggestions(query);
+    fetchSuggestions(debouncedQuery);
     setSelectedIndex(0);
-  }, [query, fetchSuggestions]);
+  }, [debouncedQuery, fetchSuggestions]);
 
   // Show suggestions when input has content
   useEffect(() => {
@@ -157,14 +171,16 @@ console.log('[ToolSearchBar] Mapped suggestions:', apiSuggestions);
     );
   };
 
-  // Group suggestions by category
-  const groupedSuggestions = suggestions.reduce((acc, suggestion) => {
-    if (!acc[suggestion.category]) {
-      acc[suggestion.category] = [];
-    }
-    acc[suggestion.category].push(suggestion);
-    return acc;
-  }, {} as Record<string, UISuggestion[]>);
+  // Memoize grouped suggestions to prevent unnecessary recalculations
+  const groupedSuggestions = useMemo(() => {
+    return suggestions.reduce((acc, suggestion) => {
+      if (!acc[suggestion.category]) {
+        acc[suggestion.category] = [];
+      }
+      acc[suggestion.category].push(suggestion);
+      return acc;
+    }, {} as Record<string, UISuggestion[]>);
+  }, [suggestions]);
 
   return (
     <div ref={containerRef} className="relative w-full max-w-2xl mx-auto">
