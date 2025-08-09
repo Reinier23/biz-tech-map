@@ -8,7 +8,7 @@ import Mapper from "./pages/Mapper";
 import AddTools from "./pages/AddTools";
 import TechMap from "./pages/TechMap";
 import UnifiedTechMap from "./pages/UnifiedTechMap";
-import ConsolidationSuggestions from "./pages/ConsolidationSuggestions";
+import Consolidation from "./pages/Consolidation";
 import GenerateMap from "./pages/GenerateMap";
 import QACheck from "./pages/QACheck";
 import NotFound from "./pages/NotFound";
@@ -30,7 +30,7 @@ const App = () => {
                 <Route path="/add-tools" element={<AddTools />} />
                 <Route path="/tech-map" element={<TechMap />} />
                 <Route path="/legacy-tech-map" element={<UnifiedTechMap />} />
-                <Route path="/consolidation" element={<ConsolidationSuggestions />} />
+                <Route path="/consolidation" element={<Consolidation />} />
                 <Route path="/generate-map" element={<GenerateMap />} />
                 <Route path="/qa-check" element={<QACheck />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
