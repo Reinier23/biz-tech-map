@@ -1,11 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, ok, err } from '../_shared/cors.ts';
 
 interface ProcessingSummary {
   processed: number;
@@ -303,7 +299,7 @@ async function processSuggestion(
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
@@ -331,20 +327,20 @@ serve(async (req) => {
     const isServiceRoleCall = authHeader === `Bearer ${supabaseKey}`;
     if (!isServiceRoleCall) {
       if (!authHeader) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        return err('Unauthorized', 401);
       }
       const userClient = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: authHeader } } });
       const { data: userData, error: userErr } = await userClient.auth.getUser();
       const userId = userData?.user?.id;
-      if (userErr || !userId) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
+        if (userErr || !userId) {
+          return err('Unauthorized', 401);
+        }
       const adminCheck = createClient(supabaseUrl, supabaseKey);
       const { data: roles } = await adminCheck.from('user_roles').select('role').eq('user_id', userId).eq('role', 'admin').limit(1);
       const isAdmin = Array.isArray(roles) && roles.length > 0;
-      if (!isAdmin) {
-        return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
+        if (!isAdmin) {
+          return err('Forbidden', 403);
+        }
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -361,26 +357,15 @@ serve(async (req) => {
 
     if (fetchError) {
       console.error('Error fetching suggestions:', fetchError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch suggestions' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
+      return err('Failed to fetch suggestions', 500);
     }
 
     if (!suggestions || suggestions.length === 0) {
       console.log('No unprocessed suggestions found');
-      return new Response(
-        JSON.stringify({ 
-          message: 'No unprocessed suggestions found',
-          summary: { processed: 0, added: 0, skipped: 0, errors: 0, details: [] }
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
+      return ok({ 
+        message: 'No unprocessed suggestions found',
+        summary: { processed: 0, added: 0, skipped: 0, errors: 0, details: [] }
+      });
     }
 
     console.log(`Found ${suggestions.length} unprocessed suggestions`);
@@ -413,24 +398,13 @@ serve(async (req) => {
 
     console.log('Processing completed:', summary);
 
-    return new Response(
-      JSON.stringify({ 
-        message: `Processed ${summary.processed} suggestions`,
-        summary 
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+    return ok({ 
+      message: `Processed ${summary.processed} suggestions`,
+      summary 
+    });
 
   } catch (error) {
     console.error('Error in process-suggestions function:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+    return err((error as any)?.message || 'Unexpected error', 500);
   }
 });

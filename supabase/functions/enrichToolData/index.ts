@@ -1,16 +1,12 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, ok, err } from '../_shared/cors.ts';
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
@@ -26,10 +22,7 @@ serve(async (req) => {
 
     if (!isServiceRoleCall) {
       if (!authHeader) {
-        return new Response(
-          JSON.stringify({ error: 'Unauthorized' }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return err('Unauthorized', 401);
       }
       const userClient = createClient(supabaseUrl, supabaseAnonKey, {
         global: { headers: { Authorization: authHeader } }
@@ -37,10 +30,7 @@ serve(async (req) => {
       const { data: userData, error: userErr } = await userClient.auth.getUser();
       const userId = userData?.user?.id;
       if (userErr || !userId) {
-        return new Response(
-          JSON.stringify({ error: 'Unauthorized' }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return err('Unauthorized', 401);
       }
       const adminCheck = createClient(supabaseUrl, supabaseKey);
       const { data: roles } = await adminCheck
@@ -51,23 +41,14 @@ serve(async (req) => {
         .limit(1);
       isAdmin = Array.isArray(roles) && roles.length > 0;
       if (!isAdmin) {
-        return new Response(
-          JSON.stringify({ error: 'Forbidden' }),
-          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return err('Forbidden', 403);
       }
     }
 
     const { toolName, suggestedCategory } = await req.json();
     
     if (!toolName) {
-      return new Response(
-        JSON.stringify({ error: 'toolName is required' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
+      return err('toolName is required', 400);
     }
 
     console.log(`Enriching tool data for: ${toolName}`);
@@ -113,12 +94,7 @@ serve(async (req) => {
         confidence: aiConfidence
       };
 
-      return new Response(
-        JSON.stringify(responsePayload),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
+      return ok(responsePayload);
     }
 
     // AI categorization logic
@@ -211,31 +187,10 @@ serve(async (req) => {
 
     console.log(`Successfully enriched ${toolName}:`, enrichedData);
 
-    return new Response(
-      JSON.stringify(enrichedData),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+    return ok(enrichedData);
 
   } catch (error) {
     console.error('Error in enrichToolData function:', error);
-    
-    // Return fallback data instead of error
-    const fallbackData = {
-      category: suggestedCategory || 'Other',
-      confirmedCategory: suggestedCategory ? suggestedCategory : undefined,
-      description: 'Business tool',
-      logoUrl: '',
-      confidence: 50,
-      fallback: true
-    };
-
-    return new Response(
-      JSON.stringify({ fallback: fallbackData }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+    return err((error as any)?.message || 'Unexpected error', 500);
   }
 });
