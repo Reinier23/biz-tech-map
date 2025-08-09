@@ -327,7 +327,7 @@ const ConsolidationSuggestions = () => {
                               <span><Info className="w-4 h-4 text-muted-foreground" /></span>
                             </TooltipTrigger>
                             <TooltipContent>
-                              Uses tool defaults when known; otherwise a category fallback. Configure in Settings later.
+                              Uses tool-specific defaults when known; otherwise a category fallback.
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -395,7 +395,7 @@ const ConsolidationSuggestions = () => {
                   ))}
                 </TableBody>
               </Table>
-              <p className="text-xs text-muted-foreground mt-3">Estimates only. Actual pricing varies by seats, tiers, and usage.</p>
+              <p className="text-xs text-muted-foreground mt-3">Estimates only. Actual pricing varies with seats, tiers, and usage.</p>
             </CardContent>
           </Card>
         )}
