@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { useTools } from "@/contexts/ToolsContext";
 import { resolveCostsBatch, type CostInfo } from "@/hooks/useToolCosts";
 import { analyzeStack, type AnalyzedItem } from "@/lib/ruleEngine";
@@ -36,7 +38,7 @@ const agentSteps = [
 ];
 
 const Consolidation: React.FC = () => {
-  const { tools } = useTools();
+  const { tools, addTool, removeTool } = useTools();
   const toolsForAnalysis = useMemo(
     () => tools.map(t => ({ name: t.name, category: t.confirmedCategory || t.category })),
     [tools]
@@ -45,6 +47,9 @@ const Consolidation: React.FC = () => {
   const [costs, setCosts] = useState<Record<string, CostInfo>>({});
   const [loadingCosts, setLoadingCosts] = useState(false);
   const [agentStep, setAgentStep] = useState(0);
+  const [staged, setStaged] = useState<Record<string, boolean>>({});
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     let active = true;
@@ -85,6 +90,92 @@ const Consolidation: React.FC = () => {
   const estimatedSpend = useMemo(() => {
     return Object.values(costs).reduce((sum, ci) => sum + (typeof ci?.cost_mo === "number" ? (ci.cost_mo || 0) : 0), 0);
   }, [costs]);
+
+  const actionable = useMemo(() => analyzed.filter((a) => a.action === "Replace" || a.action === "Evaluate"), [analyzed]);
+
+  const findToolForItem = useCallback((item: AnalyzedItem) => {
+    const normName = item.name.toLowerCase();
+    const normCat = (item.category || "").toLowerCase();
+    return (
+      tools.find(
+        (t) => t.name.toLowerCase() === normName && (t.confirmedCategory || t.category).toLowerCase() === normCat
+      ) || tools.find((t) => t.name.toLowerCase() === normName)
+    );
+  }, [tools]);
+
+  const stagedItems = useMemo(() => {
+    return actionable
+      .map((item) => ({ item, tool: findToolForItem(item) }))
+      .filter((x) => x.tool && staged[x.tool.id]);
+  }, [actionable, findToolForItem, staged]);
+
+  const stagedCount = stagedItems.length;
+
+  const estimatedSavings = useMemo(() => {
+    return stagedItems.reduce(
+      (sum, si) => sum + (typeof si.item.cost_mo === "number" ? (si.item.cost_mo || 0) : 0),
+      0
+    );
+  }, [stagedItems]);
+
+  const suggestedAlts = useMemo(() => {
+    const out: Array<{ name: string; category: string }> = [];
+    const seen = new Set<string>();
+    const mapCategory = (alt: string, fallback: string) => {
+      const a = alt.toLowerCase();
+      if (a.includes("service hub")) return "service";
+      if (a.includes("marketing hub")) return "marketing automation";
+      return fallback || "other";
+    };
+    for (const { item } of stagedItems) {
+      if (item.suggested_alt) {
+        const key = item.suggested_alt.toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          out.push({ name: item.suggested_alt, category: mapCategory(item.suggested_alt, item.category) });
+        }
+      }
+    }
+    return out;
+  }, [stagedItems]);
+
+  const handleApplyChanges = useCallback(() => {
+    const itemsToApply = actionable
+      .map((item) => ({ item, tool: findToolForItem(item) }))
+      .filter((x) => x.tool && staged[x.tool.id]);
+
+    const idsToRemove = itemsToApply.map((x) => x.tool!.id);
+    let removed = 0;
+    idsToRemove.forEach((id) => {
+      removeTool(id);
+      removed++;
+    });
+
+    const existingNames = new Set(tools.map((t) => t.name.toLowerCase()));
+    let added = 0;
+    for (const { item } of itemsToApply) {
+      if (item.suggested_alt) {
+        const altName = item.suggested_alt;
+        if (!existingNames.has(altName.toLowerCase())) {
+          const altCategory = (suggestedAlts.find((a) => a.name === altName)?.category) || item.category;
+          addTool({
+            id: crypto.randomUUID(),
+            name: altName,
+            category: altCategory,
+            description: "Added via consolidation suggestion",
+          });
+          existingNames.add(altName.toLowerCase());
+          added++;
+        }
+      }
+    }
+
+    const count = removed + added;
+    toast.success(`Applied ${count} changes`);
+    setDrawerOpen(false);
+    setStaged({});
+    navigate("/tech-map");
+  }, [actionable, findToolForItem, staged, removeTool, addTool, tools, suggestedAlts, navigate]);
 
   if (tools.length === 0) {
     return (
@@ -158,14 +249,19 @@ const Consolidation: React.FC = () => {
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-base">Analysis Results</CardTitle>
-                    <Tooltip>
-                      <TooltipTrigger className="text-xs text-muted-foreground underline underline-offset-4">
-                        Cost method
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        Uses tool-specific defaults when known; otherwise a category fallback.
-                      </TooltipContent>
-                    </Tooltip>
+                    <div className="flex items-center gap-3">
+                      <Button variant="secondary" size="sm" onClick={() => setDrawerOpen(true)}>
+                        View Staged Changes{stagedCount > 0 ? ` (${stagedCount})` : ""}
+                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger className="text-xs text-muted-foreground underline underline-offset-4">
+                          Cost method
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Uses tool-specific defaults when known; otherwise a category fallback.
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -178,11 +274,15 @@ const Consolidation: React.FC = () => {
                         <TableHead>Action</TableHead>
                         <TableHead>Reason</TableHead>
                         <TableHead>Suggested Alternative</TableHead>
+                        <TableHead>Stage</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {analyzed.map((item) => {
                         const costInfo = costs[item.name.toLowerCase()];
+                        const tool = findToolForItem(item);
+                        const isActionable = item.action === "Replace" || item.action === "Evaluate";
+                        const isChecked = !!(tool && staged[tool.id]);
                         return (
                           <TableRow key={item.name}>
                             <TableCell className="font-medium">{item.name}</TableCell>
@@ -214,6 +314,19 @@ const Consolidation: React.FC = () => {
                               <span className="text-sm text-foreground">{item.reason}</span>
                             </TableCell>
                             <TableCell>{item.suggested_alt ?? ""}</TableCell>
+                            <TableCell>
+                              {isActionable && tool ? (
+                                <Checkbox
+                                  checked={isChecked}
+                                  onCheckedChange={(val) =>
+                                    setStaged((prev) => ({ ...prev, [tool.id]: !!val }))
+                                  }
+                                  aria-label="Stage change"
+                                />
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
                           </TableRow>
                         );
                       })}
@@ -224,10 +337,8 @@ const Consolidation: React.FC = () => {
               </Card>
 
               <div className="flex justify-end">
-                <Button
-                  onClick={() => toast.success("Suggestions queued. Coming soon!")}
-                >
-                  Apply Suggestions
+                <Button onClick={() => setDrawerOpen(true)}>
+                  Review Staged Changes
                 </Button>
               </div>
             </div>
@@ -260,6 +371,62 @@ const Consolidation: React.FC = () => {
               </Card>
             </div>
           </div>
+
+          {/* Diff Drawer */}
+          <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
+            <SheetContent side="right" className="w-[400px] sm:w-[480px]">
+              <SheetHeader>
+                <SheetTitle>Staged Changes</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4 space-y-6">
+                <section>
+                  <h3 className="text-sm font-medium">Tools to remove</h3>
+                  <ul className="mt-2 space-y-2">
+                    {stagedItems.length === 0 ? (
+                      <li className="text-sm text-muted-foreground">No staged items.</li>
+                    ) : (
+                      stagedItems.map(({ item, tool }) => (
+                        <li key={tool!.id} className="flex items-center justify-between">
+                          <span>{item.name}</span>
+                          <span className="text-sm text-muted-foreground">
+                            {item.cost_mo != null ? currency(item.cost_mo) : "—"}
+                          </span>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </section>
+                <section>
+                  <h3 className="text-sm font-medium">Suggested replacements</h3>
+                  <ul className="mt-2 space-y-2">
+                    {suggestedAlts.length === 0 ? (
+                      <li className="text-sm text-muted-foreground">None</li>
+                    ) : (
+                      suggestedAlts.map((alt) => (
+                        <li key={alt.name} className="flex items-center justify-between">
+                          <span>{alt.name}</span>
+                          <Badge variant="outline">{alt.category}</Badge>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </section>
+                <section className="border-t pt-4">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-medium">Estimated savings</div>
+                    <div className="text-xl font-semibold">
+                      {estimatedSavings > 0 ? currency(estimatedSavings) : "—"}
+                    </div>
+                  </div>
+                </section>
+              </div>
+              <SheetFooter className="mt-6">
+                <Button disabled={stagedItems.length === 0} onClick={handleApplyChanges}>
+                  Apply Staged Changes
+                </Button>
+              </SheetFooter>
+            </SheetContent>
+          </Sheet>
         </div>
       </main>
     </>
