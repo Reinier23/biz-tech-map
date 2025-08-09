@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      category_cost_fallbacks: {
+        Row: {
+          category: string
+          cost_basis: string
+          created_at: string
+          default_cost_mo: number
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          cost_basis: string
+          created_at?: string
+          default_cost_mo: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          cost_basis?: string
+          created_at?: string
+          default_cost_mo?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       category_playbooks: {
         Row: {
           category: string
@@ -47,6 +71,36 @@ export type Database = {
           relation_type?: string | null
           tool_a?: string | null
           tool_b?: string | null
+        }
+        Relationships: []
+      }
+      tool_cost_defaults: {
+        Row: {
+          category: string
+          cost_basis: string
+          cost_mo: number
+          created_at: string
+          name: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          cost_basis: string
+          cost_mo: number
+          created_at?: string
+          name: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          cost_basis?: string
+          cost_mo?: number
+          created_at?: string
+          name?: string
+          notes?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -208,6 +262,14 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
         }
         Returns: boolean
+      }
+      resolve_tool_cost: {
+        Args: { name: string; category: string }
+        Returns: {
+          cost_mo: number
+          cost_basis: string
+          source: string
+        }[]
       }
       search_tools: {
         Args: { q: string; lim?: number }
