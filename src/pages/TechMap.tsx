@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Map } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,26 +11,34 @@ import '@xyflow/react/dist/style.css';
 import ToolNode from '@/components/nodes/ToolNode';
 import LaneNode from '@/components/nodes/LaneNode';
 import ChatCoach from '@/components/ChatCoach';
-
-const FlowInner: React.FC = () => {
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
+import { exportMapPNG, exportMapPDF } from '@/lib/export';
+import { createShare } from '@/lib/share';
+const FlowInner: React.FC<{ containerRef: React.RefObject<HTMLDivElement>; headerText: string }> = ({ containerRef, headerText }) => {
   const { nodes, edges } = useMapGraph();
   const nodeTypes = useMemo(() => ({ toolNode: ToolNode, laneNode: LaneNode }), []);
 
   return (
     <Card className="h-[80vh]">
       <CardContent className="p-0 h-full">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          nodeTypes={nodeTypes}
-          fitView
-          proOptions={{ hideAttribution: true }}
-          style={{ backgroundColor: 'hsl(var(--background))' }}
-        >
-          <MiniMap zoomable pannable style={{ backgroundColor: 'hsl(var(--card))' }} />
-          <Controls />
-          <Background />
-        </ReactFlow>
+        <div ref={containerRef} className="relative h-full">
+          <div className="absolute top-2 left-2 z-10 text-xs text-muted-foreground bg-card/70 rounded px-2 py-1">
+            {headerText}
+          </div>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            nodeTypes={nodeTypes}
+            fitView
+            proOptions={{ hideAttribution: true }}
+            style={{ backgroundColor: 'hsl(var(--background))' }}
+          >
+            <MiniMap zoomable pannable style={{ backgroundColor: 'hsl(var(--card))' }} />
+            <Controls />
+            <Background />
+          </ReactFlow>
+        </div>
       </CardContent>
     </Card>
   );
@@ -40,6 +48,43 @@ const TechMapPage: React.FC = () => {
   const { tools } = useTools();
   const total = tools.length;
   const categoriesUsed = new Set(tools.map(t => (t.confirmedCategory || t.category))).size;
+  const mapRef = useRef<HTMLDivElement>(null);
+  const companyName = 'Your Company';
+  const headerText = `Tech Map — ${companyName} — ${new Date().toLocaleString()}`;
+
+  const handleExportPNG = useCallback(async () => {
+    if (!mapRef.current) return;
+    try {
+      await exportMapPNG(mapRef.current, 'Tech-Map.png');
+    } catch (e) {
+      toast.error('Failed to export PNG. See console for details.');
+    }
+  }, []);
+
+  const handleExportPDF = useCallback(async () => {
+    if (!mapRef.current) return;
+    try {
+      await exportMapPDF(mapRef.current, 'Tech-Map.pdf', companyName);
+    } catch (e) {
+      toast.error('Failed to export PDF. See console for details.');
+    }
+  }, []);
+
+  const handleCreateShare = useCallback(async () => {
+    try {
+      const payload = {
+        tools: tools.map(t => ({ name: t.name, category: t.confirmedCategory || t.category, logoUrl: t.logoUrl })),
+        techMapMeta: { timestamp: Date.now() },
+      };
+      const { id } = await createShare(payload);
+      const url = `${window.location.origin}/share/${id}`;
+      await navigator.clipboard.writeText(url);
+      toast.success('Share link copied');
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to create share link');
+    }
+  }, [tools]);
 
   return (
     <>
@@ -60,9 +105,21 @@ const TechMapPage: React.FC = () => {
                 <h1 id="page-title" className="text-3xl font-bold text-foreground">Tech Map</h1>
                 <p className="text-sm text-muted-foreground">{total} tools across {categoriesUsed} lanes</p>
               </div>
-              <div className="hidden sm:flex items-center gap-2 text-muted-foreground">
-                <Map className="w-4 h-4" />
-                <span className="text-xs">Lanes: {CATEGORY_LANES.length}</span>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="hidden sm:flex items-center gap-2">
+                  <Map className="w-4 h-4" />
+                  <span className="text-xs">Lanes: {CATEGORY_LANES.length}</span>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="secondary" size="sm">Export Map</Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleExportPNG}>Download PNG</DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleExportPDF}>Download PDF</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button variant="outline" size="sm" onClick={handleCreateShare}>Create Share Link</Button>
               </div>
             </div>
           </header>
@@ -70,7 +127,7 @@ const TechMapPage: React.FC = () => {
           <MapGraphProvider>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div className="lg:col-span-2">
-                <FlowInner />
+                <FlowInner containerRef={mapRef} headerText={headerText} />
               </div>
               <ChatCoach />
             </div>

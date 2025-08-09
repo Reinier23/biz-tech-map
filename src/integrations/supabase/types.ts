@@ -74,6 +74,27 @@ export type Database = {
         }
         Relationships: []
       }
+      shares: {
+        Row: {
+          created_at: string
+          id: string
+          is_public: boolean
+          payload: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          payload: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          payload?: Json
+        }
+        Relationships: []
+      }
       tool_cost_defaults: {
         Row: {
           category: string

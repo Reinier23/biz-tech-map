@@ -31,23 +31,33 @@ export const useTools = () => {
 
 interface ToolsProviderProps {
   children: ReactNode;
+  initialTools?: Tool[];
+  readOnly?: boolean;
 }
 
-export const ToolsProvider: React.FC<ToolsProviderProps> = ({ children }) => {
-  const [tools, setTools] = useState<Tool[]>([]);
+export const ToolsProvider: React.FC<ToolsProviderProps> = ({ children, initialTools, readOnly }) => {
+  const [tools, setToolsState] = useState<Tool[]>(initialTools || []);
+
+  const setTools = (next: Tool[] | ((prev: Tool[]) => Tool[])) => {
+    if (readOnly) return;
+    setToolsState(typeof next === 'function' ? (next as (prev: Tool[]) => Tool[])(tools) : next);
+  };
 
   const addTool = (tool: Tool) => {
-    setTools(prev => [...prev, tool]);
+    if (readOnly) return;
+    setToolsState(prev => [...prev, tool]);
   };
 
   const updateTool = (id: string, updatedTool: Partial<Tool>) => {
-    setTools(prev => prev.map(tool => 
+    if (readOnly) return;
+    setToolsState(prev => prev.map(tool => 
       tool.id === id ? { ...tool, ...updatedTool } : tool
     ));
   };
 
   const removeTool = (id: string) => {
-    setTools(prev => prev.filter(tool => tool.id !== id));
+    if (readOnly) return;
+    setToolsState(prev => prev.filter(tool => tool.id !== id));
   };
 
   const value: ToolsContextType = {

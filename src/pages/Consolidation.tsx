@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { useTools } from "@/contexts/ToolsContext";
 import { resolveCostsBatch, type CostInfo } from "@/hooks/useToolCosts";
 import { analyzeStack, type AnalyzedItem } from "@/lib/ruleEngine";
 import { toast } from "sonner";
+import { exportConsolidationPDF } from "@/lib/export";
 
 const currency = (n: number) => new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
 
@@ -48,8 +49,9 @@ const Consolidation: React.FC = () => {
   const [loadingCosts, setLoadingCosts] = useState(false);
   const [agentStep, setAgentStep] = useState(0);
   const [staged, setStaged] = useState<Record<string, boolean>>({});
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const navigate = useNavigate();
+const [drawerOpen, setDrawerOpen] = useState(false);
+const exportRef = useRef<HTMLDivElement>(null);
+const navigate = useNavigate();
 
   useEffect(() => {
     let active = true;
@@ -198,9 +200,19 @@ const Consolidation: React.FC = () => {
     );
   }
 
-  const step = agentSteps[agentStep];
+const step = agentSteps[agentStep];
+const companyName = 'Your Company';
 
-  return (
+const handleExportReport = useCallback(async () => {
+  if (!exportRef.current) return;
+  try {
+    await exportConsolidationPDF(exportRef.current, 'Consolidation-Report.pdf', companyName);
+  } catch (e) {
+    toast.error('Failed to export report');
+  }
+}, []);
+
+return (
     <>
       <SEO title="Consolidation | Tech Stack Mapper" description="Analyze overlaps and estimate savings for your stack." path="/consolidation" />
       <main className="min-h-screen bg-gradient-to-br from-background via-background to-secondary" id="main-content">
@@ -210,167 +222,167 @@ const Consolidation: React.FC = () => {
             <p className="text-sm text-muted-foreground">MVP rule engine: Replace • Evaluate • Keep</p>
           </header>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2 space-y-4">
-              {/* Summary Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Estimated Monthly Spend</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {loadingCosts ? (
-                      <Skeleton className="h-8 w-32" />
-                    ) : (
-                      <div className="text-2xl font-semibold">{estimatedSpend > 0 ? currency(estimatedSpend) : "—"}</div>
-                    )}
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Replace</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-semibold">{replaceCount}</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Evaluate</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-semibold">{evaluateCount}</div>
-                  </CardContent>
-                </Card>
-              </div>
+<div ref={exportRef} className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+  <div className="lg:col-span-2 space-y-4">
+    {/* Summary Cards */}
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Estimated Monthly Spend</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loadingCosts ? (
+            <Skeleton className="h-8 w-32" />
+          ) : (
+            <div className="text-2xl font-semibold">{estimatedSpend > 0 ? currency(estimatedSpend) : "—"}</div>
+          )}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Replace</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-semibold">{replaceCount}</div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Evaluate</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-semibold">{evaluateCount}</div>
+        </CardContent>
+      </Card>
+    </div>
 
-              {/* Results Table */}
-              <Card>
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">Analysis Results</CardTitle>
-                    <div className="flex items-center gap-3">
-                      <Button variant="secondary" size="sm" onClick={() => setDrawerOpen(true)}>
-                        View Staged Changes{stagedCount > 0 ? ` (${stagedCount})` : ""}
-                      </Button>
-                      <Tooltip>
-                        <TooltipTrigger className="text-xs text-muted-foreground underline underline-offset-4">
-                          Cost method
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          Uses tool-specific defaults when known; otherwise a category fallback.
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tool</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Est. Monthly Cost</TableHead>
-                        <TableHead>Action</TableHead>
-                        <TableHead>Reason</TableHead>
-                        <TableHead>Suggested Alternative</TableHead>
-                        <TableHead>Stage</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {analyzed.map((item) => {
-                        const costInfo = costs[item.name.toLowerCase()];
-                        const tool = findToolForItem(item);
-                        const isActionable = item.action === "Replace" || item.action === "Evaluate";
-                        const isChecked = !!(tool && staged[tool.id]);
-                        return (
-                          <TableRow key={item.name}>
-                            <TableCell className="font-medium">{item.name}</TableCell>
-                            <TableCell>{item.category}</TableCell>
-                            <TableCell>
-                              {loadingCosts ? (
-                                <Skeleton className="h-4 w-20" />
-                              ) : item.cost_mo != null ? (
-                                <div>
-                                  <div>{currency(item.cost_mo)}</div>
-                                  {costInfo?.cost_basis && (
-                                    <div className="text-xs text-muted-foreground">{costInfo.cost_basis} • {costInfo.source}</div>
-                                  )}
-                                </div>
-                              ) : (
-                                <span>—</span>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {item.action === "Replace" ? (
-                                <Badge variant="destructive">Replace</Badge>
-                              ) : item.action === "Evaluate" ? (
-                                <Badge variant="secondary">Evaluate</Badge>
-                              ) : (
-                                <Badge>Keep</Badge>
-                              )}
-                            </TableCell>
-                            <TableCell className="max-w-[360px]">
-                              <span className="text-sm text-foreground">{item.reason}</span>
-                            </TableCell>
-                            <TableCell>{item.suggested_alt ?? ""}</TableCell>
-                            <TableCell>
-                              {isActionable && tool ? (
-                                <Checkbox
-                                  checked={isChecked}
-                                  onCheckedChange={(val) =>
-                                    setStaged((prev) => ({ ...prev, [tool.id]: !!val }))
-                                  }
-                                  aria-label="Stage change"
-                                />
-                              ) : (
-                                <span className="text-xs text-muted-foreground">—</span>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                    <TableCaption className="pt-4">Estimates only. Actual pricing varies by seats, tiers, and usage.</TableCaption>
-                  </Table>
-                </CardContent>
-              </Card>
-
-              <div className="flex justify-end">
-                <Button onClick={() => setDrawerOpen(true)}>
-                  Review Staged Changes
-                </Button>
-              </div>
-            </div>
-
-            {/* Agent Loop Panel */}
-            <div className="space-y-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Agent Loop</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div>
-                    <div className="text-sm font-medium">Current step</div>
-                    <div className="text-sm text-muted-foreground">{step.title}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium">Reasoning</div>
-                    <p className="text-sm text-muted-foreground">{step.reasoning}</p>
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium">Why this matters</div>
-                    <p className="text-sm text-muted-foreground">{step.why}</p>
-                  </div>
-                  <div className="flex justify-end">
-                    <Button variant="secondary" onClick={() => setAgentStep((s) => (s + 1) % agentSteps.length)}>
-                      Next step
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+    {/* Results Table */}
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base">Analysis Results</CardTitle>
+          <div className="flex items-center gap-3">
+            <Button variant="secondary" size="sm" onClick={() => setDrawerOpen(true)}>
+              View Staged Changes{stagedCount > 0 ? ` (${stagedCount})` : ""}
+            </Button>
+            <Tooltip>
+              <TooltipTrigger className="text-xs text-muted-foreground underline underline-offset-4">
+                Cost method
+              </TooltipTrigger>
+              <TooltipContent>
+                Uses tool-specific defaults when known; otherwise a category fallback.
+              </TooltipContent>
+            </Tooltip>
           </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Tool</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Est. Monthly Cost</TableHead>
+              <TableHead>Action</TableHead>
+              <TableHead>Reason</TableHead>
+              <TableHead>Suggested Alternative</TableHead>
+              <TableHead>Stage</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {analyzed.map((item) => {
+              const costInfo = costs[item.name.toLowerCase()];
+              const tool = findToolForItem(item);
+              const isActionable = item.action === "Replace" || item.action === "Evaluate";
+              const isChecked = !!(tool && staged[tool.id]);
+              return (
+                <TableRow key={item.name}>
+                  <TableCell className="font-medium">{item.name}</TableCell>
+                  <TableCell>{item.category}</TableCell>
+                  <TableCell>
+                    {loadingCosts ? (
+                      <Skeleton className="h-4 w-20" />
+                    ) : item.cost_mo != null ? (
+                      <div>
+                        <div>{currency(item.cost_mo)}</div>
+                        {costInfo?.cost_basis && (
+                          <div className="text-xs text-muted-foreground">{costInfo.cost_basis} • {costInfo.source}</div>
+                        )}
+                      </div>
+                    ) : (
+                      <span>—</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {item.action === "Replace" ? (
+                      <Badge variant="destructive">Replace</Badge>
+                    ) : item.action === "Evaluate" ? (
+                      <Badge variant="secondary">Evaluate</Badge>
+                    ) : (
+                      <Badge>Keep</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="max-w-[360px]">
+                    <span className="text-sm text-foreground">{item.reason}</span>
+                  </TableCell>
+                  <TableCell>{item.suggested_alt ?? ""}</TableCell>
+                  <TableCell>
+                    {isActionable && tool ? (
+                      <Checkbox
+                        checked={isChecked}
+                        onCheckedChange={(val) =>
+                          setStaged((prev) => ({ ...prev, [tool.id]: !!val }))
+                        }
+                        aria-label="Stage change"
+                      />
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+          <TableCaption className="pt-4">Estimates only. Actual pricing varies by seats, tiers, and usage.</TableCaption>
+        </Table>
+      </CardContent>
+    </Card>
+
+    <div className="flex justify-end">
+      <Button onClick={() => setDrawerOpen(true)}>
+        Review Staged Changes
+      </Button>
+    </div>
+  </div>
+
+  {/* Agent Loop Panel */}
+  <div className="space-y-4">
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">Agent Loop</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div>
+          <div className="text-sm font-medium">Current step</div>
+          <div className="text-sm text-muted-foreground">{step.title}</div>
+        </div>
+        <div>
+          <div className="text-sm font-medium">Reasoning</div>
+          <p className="text-sm text-muted-foreground">{step.reasoning}</p>
+        </div>
+        <div>
+          <div className="text-sm font-medium">Why this matters</div>
+          <p className="text-sm text-muted-foreground">{step.why}</p>
+        </div>
+        <div className="flex justify-end">
+          <Button variant="secondary" onClick={() => setAgentStep((s) => (s + 1) % agentSteps.length)}>
+            Next step
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+</div>
 
           {/* Diff Drawer */}
           <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
