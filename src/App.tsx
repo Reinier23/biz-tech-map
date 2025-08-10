@@ -11,6 +11,7 @@ import UnifiedTechMap from "./pages/UnifiedTechMap";
 import Consolidation from "./pages/Consolidation";
 import GenerateMap from "./pages/GenerateMap";
 import QACheck from "./pages/QACheck";
+import QA from "./pages/QA";
 import NotFound from "./pages/NotFound";
 import { ToolsProvider } from "./contexts/ToolsContext";
 import { HelmetProvider } from "react-helmet-async";
@@ -36,6 +37,7 @@ const App = () => {
                 <Route path="/consolidation" element={<Consolidation />} />
                 <Route path="/generate-map" element={<GenerateMap />} />
                 <Route path="/qa-check" element={<QACheck />} />
+                <Route path="/qa" element={<QA />} />
                 <Route path="/share/:id" element={<Share />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/audit" element={<Audit />} />
