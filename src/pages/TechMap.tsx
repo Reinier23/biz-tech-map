@@ -13,7 +13,7 @@ import ToolNode from '@/components/nodes/ToolNode';
 import LaneNode from '@/components/nodes/LaneNode';
 import GhostNode from '@/components/nodes/GhostNode';
 import LabeledEdge from '@/components/edges/LabeledEdge';
-import ChatCoach from '@/components/ChatCoach';
+import AssistantPanel from '@/components/AssistantPanel';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { exportMapPNG, exportMapPDF } from '@/lib/export';
@@ -190,8 +190,8 @@ const TechMapPage: React.FC = () => {
                 <div className="lg:col-span-2">
                   <FlowInner containerRef={mapRef} headerText={headerText} />
                 </div>
-                <ErrorBoundary onError={(error) => console.error('[TechMap] ChatCoach error:', error)}>
-                  <ChatCoach />
+                <ErrorBoundary onError={(error) => console.error('[TechMap] Assistant error:', error)}>
+                  <AssistantPanel />
                 </ErrorBoundary>
               </div>
             </MapGraphProvider>
