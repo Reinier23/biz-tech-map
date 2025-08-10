@@ -117,19 +117,20 @@ const enrichToolData = useCallback(async (toolName: string, suggestedCategory?: 
     // Logging for verification
     console.log('[addTool]', { name: toolName, suggestedCategory, logoReturned: !!(enrichedData?.logoUrl) });
 
-    if (enrichedData) {
-      console.log(`✅ Tool enriched successfully:`, enrichedData);
-      setTools(prev => prev.map(tool => 
-        tool.id === newTool.id 
-          ? {
-              ...tool,
-              // Preserve original category and confirmedCategory from selection
-              description: enrichedData.description || tool.description,
-              logoUrl: enrichedData.logoUrl || tool.logoUrl,
-            }
-          : tool
-      ));
-    }
+      if (enrichedData) {
+        console.log(`✅ Tool enriched successfully:`, enrichedData);
+        setTools(prev => prev.map(tool => 
+          tool.id === newTool.id 
+            ? {
+                ...tool,
+                // Preserve original category and confirmedCategory from selection
+                description: enrichedData.description || tool.description,
+                logoUrl: enrichedData.logoUrl || tool.logoUrl,
+                confidence: typeof enrichedData.confidence === 'number' ? enrichedData.confidence : tool.confidence,
+              }
+            : tool
+        ));
+      }
   }, [tools, enrichToolData]);
 
   const handleRemoveTool = useCallback((id: string) => {

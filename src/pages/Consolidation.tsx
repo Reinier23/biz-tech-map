@@ -348,7 +348,7 @@ return (
                         onCheckedChange={(val) =>
                           setStaged((prev) => ({ ...prev, [tool.id]: !!val }))
                         }
-                        aria-label="Stage change"
+                        aria-label={`Stage change for ${item.name}`}
                       />
                     ) : (
                       <span className="text-xs text-muted-foreground">—</span>

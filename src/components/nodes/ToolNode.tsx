@@ -15,6 +15,7 @@ export const ToolNode: React.FC<NodeProps> = ({ data }) => {
           alt={`${label} logo`}
           className="w-8 h-8 rounded"
           loading="lazy"
+          crossOrigin="anonymous"
           onError={(e) => {
             (e.currentTarget as HTMLImageElement).onerror = null;
             (e.currentTarget as HTMLImageElement).src = '/placeholder.svg';

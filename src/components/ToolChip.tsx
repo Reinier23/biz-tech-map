@@ -31,11 +31,15 @@ export const ToolChip: React.FC<ToolChipProps> = ({ tool, onRemove }) => {
       {/* Tool Logo */}
       {tool.logoUrl && (
         <img 
-          src={tool.logoUrl} 
+          src={tool.logoUrl}
           alt={`${tool.name} logo`}
           className="h-6 w-6 object-contain rounded"
+          crossOrigin="anonymous"
+          loading="lazy"
           onError={(e) => {
-            (e.target as HTMLImageElement).style.display = 'none';
+            const img = e.currentTarget as HTMLImageElement;
+            img.onerror = null;
+            img.src = '/placeholder.svg';
           }}
         />
       )}

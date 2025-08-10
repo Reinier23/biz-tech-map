@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { SEO } from '@/components/SEO';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { MapGraphProvider, useMapGraph } from '@/contexts/MapGraphContext';
 import { ReactFlow, Background, Controls, MiniMap } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -111,8 +112,11 @@ const SharePage: React.FC = () => {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Link>
-            <h1 id="page-title" className="text-3xl font-bold text-foreground">Shared Tech Map</h1>
-            <p className="text-sm text-muted-foreground">Read-only view</p>
+            <div className="flex items-center gap-2">
+              <h1 id="page-title" className="text-3xl font-bold text-foreground">Shared Tech Map</h1>
+              <Badge variant="secondary">Read-only</Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">This map was shared for viewing only.</p>
           </header>
 
           <ToolsProvider initialTools={tools} readOnly>

@@ -62,7 +62,8 @@ const TechMapPage: React.FC = () => {
     if (!mapRef.current) return;
     if (DEBUG) console.debug('[TechMap] Exporting PNG');
     try {
-      await exportMapPNG(mapRef.current, 'Tech-Map.png');
+      const dateStr = new Date().toISOString().slice(0, 10);
+      await exportMapPNG(mapRef.current, `BizTechMap_TechMap_${dateStr}.png`);
       if (DEBUG) console.debug('[TechMap] PNG export successful');
     } catch (e) {
       console.error('[TechMap] PNG export failed:', e);
@@ -74,7 +75,8 @@ const TechMapPage: React.FC = () => {
     if (!mapRef.current) return;
     if (DEBUG) console.debug('[TechMap] Exporting PDF');
     try {
-      await exportMapPDF(mapRef.current, 'Tech-Map.pdf', companyName);
+      const dateStr = new Date().toISOString().slice(0, 10);
+      await exportMapPDF(mapRef.current, `BizTechMap_TechMap_${dateStr}.pdf`, companyName);
       if (DEBUG) console.debug('[TechMap] PDF export successful');
     } catch (e) {
       console.error('[TechMap] PDF export failed:', e);
@@ -91,12 +93,22 @@ const TechMapPage: React.FC = () => {
       };
       const { id } = await createShare(payload);
       const url = `${window.location.origin}/share/${id}`;
-      await navigator.clipboard.writeText(url);
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch (clipErr) {
+        // Fallback copy method
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch {}
+        document.body.removeChild(ta);
+      }
       if (DEBUG) console.debug('[TechMap] Share link created:', id);
-      toast.success('Share link copied');
-    } catch (e) {
+      toast.success('Share link copied to clipboard');
+    } catch (e: any) {
       console.error('[TechMap] Share creation failed:', e);
-      toast.error('Failed to create share link');
+      toast.error('Sign in required to create share links.');
     }
   }, [tools]);
 
@@ -119,21 +131,21 @@ const TechMapPage: React.FC = () => {
                 <h1 id="page-title" className="text-3xl font-bold text-foreground">Tech Map</h1>
                 <p className="text-sm text-muted-foreground">{total} tools across {categoriesUsed} lanes</p>
               </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="flex items-center gap-2 text-muted-foreground flex-wrap">
                 <div className="hidden sm:flex items-center gap-2">
                   <Map className="w-4 h-4" />
                   <span className="text-xs">Lanes: {CATEGORY_LANES.length}</span>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="secondary" size="sm">Export Map</Button>
+                    <Button variant="secondary" size="sm" aria-label="Export options">Export Map</Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={handleExportPNG}>Download PNG</DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleExportPDF}>Download PDF</DropdownMenuItem>
+                  <DropdownMenuContent align="end" aria-label="Export menu">
+                    <DropdownMenuItem onClick={handleExportPNG} aria-label="Download PNG of Tech Map">Download PNG</DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleExportPDF} aria-label="Download PDF of Tech Map">Download PDF</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button variant="outline" size="sm" onClick={handleCreateShare}>Create Share Link</Button>
+                <Button variant="outline" size="sm" onClick={handleCreateShare} aria-label="Create share link">Create Share Link</Button>
                 <Link to="/settings"><Button variant="ghost" size="sm">Settings</Button></Link>
               </div>
             </div>

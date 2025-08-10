@@ -50,8 +50,19 @@ export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existin
     try {
       setIsLoading(true);
 
-      const q = (searchQuery && searchQuery.length >= 2) ? searchQuery : '';
-      const { data, error } = await (supabase as any).rpc('search_tools', { q, lim: 10 });
+      const trimmed = (searchQuery || '').trim();
+      if (trimmed.length < 2) {
+        // Show curated local list for short/empty queries; avoid hitting RPC
+        const local = getToolSuggestions('', 8) as UISuggestion[];
+        const filtered = local.filter(suggestion =>
+          !existingTools.some(tool => tool.name.toLowerCase() === suggestion.name.toLowerCase())
+        );
+        setSuggestions(filtered);
+        setIsLoading(false);
+        return;
+      }
+
+      const { data, error } = await (supabase as any).rpc('search_tools', { q: trimmed, lim: 10 });
 
       if (error) throw error;
 
@@ -194,6 +205,11 @@ if (DEBUG) {
           onFocus={() => setShowSuggestions(true)}
           placeholder="Search for tools like Microsoft 365, Azure, Salesforce..."
           className="pl-10 pr-20 h-12 text-base bg-background border-2 focus:border-primary"
+          aria-label="Search tools"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={showSuggestions}
+          aria-controls="tool-suggestions"
         />
         <Button
           onClick={() => handleAddTool(query)}
@@ -208,7 +224,7 @@ if (DEBUG) {
       {showSuggestions && (suggestions.length > 0 || query.length === 0) && (
         <div className="absolute top-full left-0 right-0 mt-1 z-50">
           <Command className="rounded-lg border-2 shadow-lg bg-background">
-            <CommandList className="max-h-80">
+            <CommandList id="tool-suggestions" className="max-h-80" aria-live="polite">
               {suggestions.length === 0 && query.length > 0 ? (
                 <CommandEmpty className="py-6 text-center text-sm">
                   <div className="space-y-4">
@@ -257,11 +273,12 @@ if (DEBUG) {
                               <div className="flex items-center justify-between w-full">
                                 <div className="flex items-center space-x-3">
                                   {(suggestion.domain || suggestion.logoUrl) ? (
-<img
+                                    <img
                                       src={suggestion.domain ? brandfetchLogo(suggestion.domain) : suggestion.logoUrl!}
                                       alt={suggestion.name}
                                       className="w-6 h-6 rounded-full"
                                       loading="lazy"
+                                      crossOrigin="anonymous"
                                       onError={(e) => {
                                         e.currentTarget.onerror = null;
                                         e.currentTarget.src = '/placeholder.svg';
