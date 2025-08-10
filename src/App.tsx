@@ -19,6 +19,10 @@ import Share from "./pages/Share";
 import Settings from "./pages/Settings";
 import Audit from "./pages/Audit";
 import FixRunner from "./pages/FixRunner";
+import { AuthProvider } from "./contexts/AuthContext";
+import AuthModal from "./components/AuthModal";
+import HeaderBar from "./components/HeaderBar";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -26,31 +30,35 @@ const App = () => {
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
-        <ToolsProvider>
-          <TooltipProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/mapper" element={<Mapper />} />
-                <Route path="/add-tools" element={<AddTools />} />
-                <Route path="/tech-map" element={<TechMap />} />
-                <Route path="/legacy-tech-map" element={<UnifiedTechMap />} />
-                <Route path="/consolidation" element={<Consolidation />} />
-                <Route path="/generate-map" element={<GenerateMap />} />
-                <Route path="/qa-check" element={<QACheck />} />
-                <Route path="/qa" element={<QA />} />
-                <Route path="/share/:id" element={<Share />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/audit" element={<Audit />} />
-                <Route path="/fix-runner" element={<FixRunner />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              <Toaster />
-              <Sonner />
-            </BrowserRouter>
-          </TooltipProvider>
-        </ToolsProvider>
+        <AuthProvider>
+          <ToolsProvider>
+            <TooltipProvider>
+              <BrowserRouter>
+                <HeaderBar />
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/mapper" element={<Mapper />} />
+                  <Route path="/add-tools" element={<AddTools />} />
+                  <Route path="/tech-map" element={<TechMap />} />
+                  <Route path="/legacy-tech-map" element={<UnifiedTechMap />} />
+                  <Route path="/consolidation" element={<Consolidation />} />
+                  <Route path="/generate-map" element={<GenerateMap />} />
+                  <Route path="/qa-check" element={<QACheck />} />
+                  <Route path="/qa" element={<QA />} />
+                  <Route path="/share/:id" element={<Share />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/audit" element={<ProtectedRoute><Audit /></ProtectedRoute>} />
+                  <Route path="/fix-runner" element={<FixRunner />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+                <Toaster />
+                <Sonner />
+                <AuthModal />
+              </BrowserRouter>
+            </TooltipProvider>
+          </ToolsProvider>
+        </AuthProvider>
       </QueryClientProvider>
     </HelmetProvider>
   );

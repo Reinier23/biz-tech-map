@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { SEO } from '@/components/SEO';
 import { useTools } from '@/contexts/ToolsContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { MapGraphProvider, useMapGraph, CATEGORY_LANES } from '@/contexts/MapGraphContext';
 import { ReactFlow, Background, Controls, MiniMap } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -84,33 +85,42 @@ const TechMapPage: React.FC = () => {
     }
   }, []);
 
-  const handleCreateShare = useCallback(async () => {
+  const { user, requireSignIn } = useAuth();
+
+  const createShareAndCopy = useCallback(async () => {
     if (DEBUG) console.debug('[TechMap] Creating share link');
+    const payload = {
+      tools: tools.map(t => ({ name: t.name, category: t.confirmedCategory || t.category, logoUrl: t.logoUrl })),
+      techMapMeta: { timestamp: Date.now() },
+    };
+    const { id } = await createShare(payload);
+    const url = `${window.location.origin}/share/${id}`;
     try {
-      const payload = {
-        tools: tools.map(t => ({ name: t.name, category: t.confirmedCategory || t.category, logoUrl: t.logoUrl })),
-        techMapMeta: { timestamp: Date.now() },
-      };
-      const { id } = await createShare(payload);
-      const url = `${window.location.origin}/share/${id}`;
-      try {
-        await navigator.clipboard.writeText(url);
-      } catch (clipErr) {
-        // Fallback copy method
-        const ta = document.createElement('textarea');
-        ta.value = url;
-        document.body.appendChild(ta);
-        ta.select();
-        try { document.execCommand('copy'); } catch {}
-        document.body.removeChild(ta);
-      }
-      if (DEBUG) console.debug('[TechMap] Share link created:', id);
-      toast.success('Share link copied to clipboard');
-    } catch (e: any) {
-      console.error('[TechMap] Share creation failed:', e);
-      toast.error('Sign in required to create share links.');
+      await navigator.clipboard.writeText(url);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = url;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch {}
+      document.body.removeChild(ta);
     }
+    if (DEBUG) console.debug('[TechMap] Share link created:', id);
+    toast.success('Share link copied to clipboard');
   }, [tools]);
+
+  const handleCreateShare = useCallback(async () => {
+    if (!user) {
+      requireSignIn(() => { void createShareAndCopy(); });
+      return;
+    }
+    try {
+      await createShareAndCopy();
+    } catch (e) {
+      console.error('[TechMap] Share creation failed:', e);
+      toast.error('Failed to create share link. Please try again.');
+    }
+  }, [user, requireSignIn, createShareAndCopy]);
 
   return (
     <>
