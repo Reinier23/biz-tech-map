@@ -54,6 +54,18 @@ const FlowInner: React.FC<{ containerRef: React.RefObject<HTMLDivElement>; heade
           >
             <MiniMap zoomable pannable style={{ backgroundColor: 'hsl(var(--card))' }} />
             <Controls />
+            <Panel position="top-right">
+              <div className="text-xs text-muted-foreground bg-card/80 backdrop-blur rounded-md border px-3 py-2 space-y-1">
+                <div className="font-semibold">Legend</div>
+                <ul className="list-disc pl-4">
+                  <li>Marketing → Sales: Leads</li>
+                  <li>Service ↔ Comms: Tickets/Notifications</li>
+                  <li>Data → Analytics: Models/Reports</li>
+                  <li>ERP ↔ Finance: Orders/Invoices</li>
+                  <li>Labels visible at zoom ≥ 0.5</li>
+                </ul>
+              </div>
+            </Panel>
             <Background variant={BackgroundVariant.Dots} gap={24} size={1} />
           </ReactFlow>
         </div>

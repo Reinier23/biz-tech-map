@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState, ReactNo
 import type { Node, Edge } from '@xyflow/react';
 import { MarkerType } from '@xyflow/react';
 import dagre from 'dagre';
-import ELK from 'elkjs/lib/elk.bundled.js';
+
 import { useTools } from '@/contexts/ToolsContext';
 import { supabase } from '@/integrations/supabase/client';
 import { getLayoutEngine } from '@/lib/config';
@@ -128,7 +128,7 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
   }, [tools]);
 
   const layout = useMemo(() => {
-    const elk = new ELK();
+    
 
     const sortByVendors = (list: typeof tools) => {
       const buckets: Record<string, typeof tools> = {};
@@ -172,6 +172,8 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
     };
 
     const computeLaneWithElk = async (laneTools: typeof tools) => {
+      const { default: ELK } = await import('elkjs/lib/elk.bundled.js');
+      const elk = new ELK();
       const elkGraph: any = {
         id: 'root',
         layoutOptions: {
@@ -189,7 +191,7 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
       const pos: Record<string, { x: number; y: number }> = {};
       (res.children || []).forEach((c: any) => {
         const id = String(c.id).replace('tool-', '');
-        pos[id] = { x: Math.round(c.x || 0), y: Math.round(c.y || 0) };
+        pos[id] = { x: Math.round((c.x || 0)), y: Math.round((c.y || 0)) };
       });
       return pos;
     };
