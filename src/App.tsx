@@ -18,6 +18,7 @@ import { HelmetProvider } from "react-helmet-async";
 import Share from "./pages/Share";
 import Settings from "./pages/Settings";
 import Audit from "./pages/Audit";
+import FixRunner from "./pages/FixRunner";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const App = () => {
                 <Route path="/share/:id" element={<Share />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/audit" element={<Audit />} />
+                <Route path="/fix-runner" element={<FixRunner />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

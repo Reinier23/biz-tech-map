@@ -1,0 +1,69 @@
+[
+  {
+    "id": "FR-001",
+    "title": "Add Fix Runner page and smoke checklist",
+    "severity": "critical",
+    "files": ["src/pages/FixRunner.tsx", "src/lib/smoke.ts", "src/App.tsx"],
+    "steps": [
+      "Create FixRunner page at /fix-runner",
+      "Implement lightweight smoke checks in src/lib/smoke.ts",
+      "Add route and SEO tags"
+    ],
+    "acceptance": [
+      "Page renders and lists queue items",
+      "Smoke checks can run and show pass/fail",
+      "No TS errors"
+    ],
+    "status": "done",
+    "note": "Runner created with basic checks"
+  },
+  {
+    "id": "FR-002",
+    "title": "Replace Clearbit logos with Brandfetch Link API in local fallbacks",
+    "severity": "critical",
+    "files": ["src/lib/toolSuggestions.ts", "src/lib/utils.ts", "supabase/functions/enrichToolData/index.ts"],
+    "steps": [
+      "Update toolSuggestions logoUrl prefixes to logo.brandfetch.io",
+      "Ensure utils.brandfetchLogo uses logo.brandfetch.io",
+      "Ensure enrichToolData builds free logo URL"
+    ],
+    "acceptance": [
+      "No references to logo.clearbit.com remain",
+      "Logos load or fallback to placeholder"
+    ],
+    "status": "done",
+    "note": "Local dataset and helpers migrated"
+  },
+  {
+    "id": "FR-003",
+    "title": "Audit logging for export and consolidation actions",
+    "severity": "high",
+    "files": ["src/lib/export.ts", "src/pages/Consolidation.tsx", "src/lib/auditUtils.ts"],
+    "steps": [
+      "Log export_png and export_pdf events",
+      "Log suggestion_applied after staged changes"
+    ],
+    "acceptance": [
+      "Events appear in audit_log for authenticated users",
+      "UI unaffected when unauthenticated"
+    ],
+    "status": "done",
+    "note": "Added logAudit calls"
+  },
+  {
+    "id": "FR-004",
+    "title": "Preserve category on enrichment; free logo fallback in function",
+    "severity": "high",
+    "files": ["supabase/functions/enrichToolData/index.ts"],
+    "steps": [
+      "Prefer existing category; set confirmedCategory when derived",
+      "Use logo.brandfetch.io without keys"
+    ],
+    "acceptance": [
+      "Adding tools keeps user-selected category",
+      "No paid Brandfetch usage"
+    ],
+    "status": "done",
+    "note": "Function uses category and free logo link"
+  }
+]
