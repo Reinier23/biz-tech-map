@@ -1,7 +1,7 @@
 export const DEBUG = false; // Set to true for development debugging
 
 // Feature flag for map layout engine; default 'dagre'. Can be overridden via localStorage('techmap_layout')
-export const MAP_LAYOUT_ENGINE: 'dagre' | 'elk' = 'dagre';
+export const MAP_LAYOUT_ENGINE: 'dagre' | 'elk' = 'elk';
 
 export function getLayoutEngine(): 'dagre' | 'elk' {
   try {

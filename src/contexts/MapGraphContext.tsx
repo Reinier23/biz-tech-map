@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState, ReactNode } from 'react';
 import type { Node, Edge } from '@xyflow/react';
 import { MarkerType } from '@xyflow/react';
 import dagre from 'dagre';
@@ -7,58 +7,47 @@ import { useTools } from '@/contexts/ToolsContext';
 import { supabase } from '@/integrations/supabase/client';
 import { getLayoutEngine } from '@/lib/config';
 
-// Category lanes in fixed order
-export const CATEGORY_LANES: string[] = [
-  'Marketing',
-  'Sales',
-  'Service',
-  'Comms',
-  'Dev/IT',
-  'Project Management',
-  'Knowledge',
-  'Development',
-  'Finance',
-  'Analytics',
-  'ERP',
-  'Security',
-  'Ecommerce',
-  'Data',
-  'Ops/NoCode',
-  'Other',
-]; 
+// Architecture layers (swimlanes) in fixed order
+export const ARCH_LAYERS: string[] = [
+  'Data Sources / Capture',
+  'Integration / iPaaS',
+  'Data / Warehouse',
+  'BI / Analytics',
+  'Engagement (Mktg/Sales/Service)',
+  'Operations / Backoffice',
+  'Identity / Security',
+  'Dev / IT',
+];
+
+// Backward-compat export to avoid breaking imports
+export const CATEGORY_LANES = ARCH_LAYERS;
 
 export const LANE_COLORS: Record<string, string> = {
-  'Marketing': '#6E56CF',
-  'Sales': '#0EA5E9',
-  'Service': '#22C55E',
-  'Comms': '#6366F1',
-  'Dev/IT': '#F59E0B',
-  'Analytics': '#A855F7',
-  'Finance': '#F97316',
-  'ERP': '#10B981',
-  'HR': '#EF4444',
-  'Data': '#14B8A6',
-  'Project Management': '#8B5CF6',
-  'Knowledge': '#64748B',
-  'Development': '#F59E0B',
-  'Security': '#64748B',
-  'Ecommerce': '#0EA5E9',
-  'Ops/NoCode': '#94A3B8',
+  'Data Sources / Capture': '#60A5FA',
+  'Integration / iPaaS': '#34D399',
+  'Data / Warehouse': '#A78BFA',
+  'BI / Analytics': '#F59E0B',
+  'Engagement (Mktg/Sales/Service)': '#F472B6',
+  'Operations / Backoffice': '#F97316',
+  'Identity / Security': '#94A3B8',
+  'Dev / IT': '#10B981',
   'Other': '#94A3B8',
 };
 
+export const ALL_LANES: string[] = [...ARCH_LAYERS, 'Other'];
+
 const VENDOR_GROUPS: Record<string, string[]> = {
-  Microsoft: ['Microsoft 365','Azure','Power BI','Power Apps','Power Automate','Intune','Entra','SharePoint','OneDrive','Dynamics'],
+  Microsoft: ['Microsoft 365','Azure','Power BI','Power Apps','Power Automate','Intune','Entra','SharePoint','OneDrive','Dynamics','Outlook'],
   Google: ['Google Workspace','Google Analytics','Google Ads','BigQuery','Looker','GCP','Google Cloud'],
   Atlassian: ['Jira','Confluence','Trello','Bitbucket','Statuspage','Opsgenie'],
-  AWS: ['AWS','Redshift','CloudWatch','ECS','EKS'],
-  Salesforce: ['Salesforce','Pardot','Tableau','MuleSoft'],
+  AWS: ['AWS','Redshift','CloudWatch','ECS','EKS','S3'],
+  Salesforce: ['Salesforce','Pardot','Tableau','MuleSoft','Slack'],
   HubSpot: ['HubSpot','HubSpot CRM','CMS Hub','Service Hub','Marketing Hub','Sales Hub'],
   Zendesk: ['Zendesk','Zendesk Sell'],
   ServiceNow: ['ServiceNow'],
-  Adobe: ['Adobe Analytics','Adobe Marketo','Adobe Creative Cloud'],
+  Adobe: ['Adobe','Marketo','Adobe Analytics','Adobe Creative Cloud','Workfront'],
   Oracle: ['Oracle','Eloqua'],
-  SAP: ['SAP'],
+  SAP: ['SAP','SuccessFactors','Ariba'],
   Stripe: ['Stripe'],
   Twilio: ['Twilio','Segment'],
   Snowflake: ['Snowflake'],
@@ -66,7 +55,12 @@ const VENDOR_GROUPS: Record<string, string[]> = {
   Datadog: ['Datadog'],
   Cloudflare: ['Cloudflare'],
   Shopify: ['Shopify'],
+  Okta: ['Okta'],
 };
+
+const VENDOR_ORDER: string[] = [
+  'Microsoft','Google','Atlassian','AWS','Salesforce','HubSpot','Zendesk','ServiceNow','Adobe','Oracle','SAP','Stripe','Twilio','Snowflake','MongoDB','Datadog','Cloudflare','Shopify','Okta'
+];
 
 interface MapGraphContextType {
   nodes: Node[];
@@ -117,33 +111,43 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
   }, []);
   const categorized = useMemo(() => {
     const buckets: Record<string, typeof tools> = {};
-    CATEGORY_LANES.forEach((c) => (buckets[c] = []));
+    ALL_LANES.forEach((l) => (buckets[l] = []));
     for (const t of tools) {
-      const lane = (t.confirmedCategory || t.category || 'Other') as string;
-      const key = CATEGORY_LANES.includes(lane) ? lane : 'Other';
+      const lane = (t as any).arch_layer || 'Other';
+      const key = ALL_LANES.includes(lane) ? lane : 'Other';
       buckets[key] = buckets[key] || [];
       buckets[key].push(t);
     }
     return buckets;
   }, [tools]);
 
+  const toolsChangedKey = useMemo(() =>
+    JSON.stringify(
+      tools.map((t) => [t.id, t.name, (t as any).vendor || '', (t as any).arch_layer || '']).sort()
+    )
+  , [tools]);
+
   const layout = useMemo(() => {
     
 
     const sortByVendors = (list: typeof tools) => {
-      const buckets: Record<string, typeof tools> = {};
-      const vendorOrder = Object.keys(VENDOR_GROUPS);
-      vendorOrder.forEach(v => (buckets[v] = []));
-      const ungrouped: typeof tools = [];
-      for (const t of list) {
-        const name = t.name;
-        const matchVendor = vendorOrder.find(v => VENDOR_GROUPS[v].some(n => name.toLowerCase().includes(n.toLowerCase())));
-        if (matchVendor) buckets[matchVendor].push(t); else ungrouped.push(t);
-      }
-      const ordered: typeof tools = [];
-      vendorOrder.forEach(v => ordered.push(...buckets[v].sort((a,b)=>a.name.localeCompare(b.name))));
-      ordered.push(...ungrouped.sort((a,b)=>a.name.localeCompare(b.name)));
-      return ordered;
+      const inferVendorFromName = (name: string): string | undefined => {
+        const low = name.toLowerCase();
+        return Object.keys(VENDOR_GROUPS).find((v) => VENDOR_GROUPS[v].some((n) => low.includes(n.toLowerCase())));
+      };
+      const vendorIdx = (v?: string | null) => {
+        if (!v) return Number.POSITIVE_INFINITY;
+        const i = VENDOR_ORDER.indexOf(v);
+        return i === -1 ? Number.POSITIVE_INFINITY : i;
+      };
+      return [...list].sort((a, b) => {
+        const va = (a as any).vendor || inferVendorFromName(a.name) || '';
+        const vb = (b as any).vendor || inferVendorFromName(b.name) || '';
+        const ia = vendorIdx(va);
+        const ib = vendorIdx(vb);
+        if (ia !== ib) return ia - ib;
+        return a.name.localeCompare(b.name);
+      });
     };
 
     const knownPairLabel = (aCat: string, bCat: string, rel?: string) => {
@@ -247,12 +251,15 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
       const laneFirstToolId: Record<string, string> = {};
       let currentY = 0;
 
+      const engine = getLayoutEngine();
+      console.info(`[TechMap] Active layout engine: ${engine}`);
+
       const ghostList = buildGhostSuggestions(categorized);
 
       const idToCategory = new Map<string, string>();
       tools.forEach((t) => idToCategory.set(t.id, (t.confirmedCategory || t.category || 'Other') as string));
 
-      for (const category of CATEGORY_LANES) {
+      for (const category of ALL_LANES) {
         const laneToolsRaw = categorized[category] || [];
         const laneTools = sortByVendors(laneToolsRaw);
         if (laneTools.length > 0) { laneFirstToolId[category] = laneTools[0].id; }
@@ -279,7 +286,7 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
                   id: `tool-${t.id}`,
                   type: 'toolNode',
                   position: { x: LANE_HORIZONTAL_PADDING + x, y: currentY + y },
-                  data: { label: t.name, category, logoUrl, colorHex },
+                  data: { label: t.name, lane: category, vendor: (t as any).vendor, domain: (t as any).domain, archLayer: (t as any).arch_layer || category, confidence: (t as any).confidence, logoUrl, colorHex },
                 });
               } else {
                 const x = p.x;
@@ -290,7 +297,7 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
                   id: `tool-${t.id}`,
                   type: 'toolNode',
                   position: { x: LANE_HORIZONTAL_PADDING + x, y: currentY + y - NODE_HEIGHT / 2 },
-                  data: { label: t.name, category, logoUrl, colorHex },
+                  data: { label: t.name, lane: category, vendor: (t as any).vendor, domain: (t as any).domain, archLayer: (t as any).arch_layer || category, confidence: (t as any).confidence, logoUrl, colorHex },
                 });
               }
             });
