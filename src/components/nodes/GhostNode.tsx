@@ -2,6 +2,7 @@ import React from 'react';
 import type { NodeProps } from '@xyflow/react';
 import { Plus, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTools } from '@/contexts/ToolsContext';
 
 interface GhostData {
   label: string;
@@ -15,6 +16,7 @@ interface GhostData {
 export const GhostNode: React.FC<NodeProps> = ({ data }) => {
   const d = (data as unknown) as GhostData;
   const navigate = useNavigate();
+  const { addTool } = useTools();
 
   const handleSearch = () => {
     try {
@@ -24,7 +26,13 @@ export const GhostNode: React.FC<NodeProps> = ({ data }) => {
   };
 
   const handleAdd = () => {
-    d.onAdd?.(d.suggestedName || d.query, d.suggestedCategory);
+    const name = d.suggestedName || d.query;
+    if (!name) return;
+    const id = typeof crypto !== 'undefined' && (crypto as any).randomUUID
+      ? (crypto as any).randomUUID()
+      : Math.random().toString(36).slice(2);
+    const category = d.suggestedCategory || 'Other';
+    addTool({ id, name, category, description: 'Added via ghost hint' });
   };
 
   return (
@@ -36,8 +44,22 @@ export const GhostNode: React.FC<NodeProps> = ({ data }) => {
         <div className="text-sm font-semibold text-muted-foreground truncate" title={d.label}>{d.label}</div>
         <div className="text-[10px] text-muted-foreground/80 truncate" title={d.hint}>{d.hint}</div>
         <div className="mt-1 flex gap-2">
-          <button className="text-[10px] px-2 py-[2px] rounded border" onClick={handleAdd}>Add</button>
-          <button className="text-[10px] px-2 py-[2px] rounded border" onClick={handleSearch}><Search className="inline w-3 h-3 mr-1"/>Search</button>
+          <button
+            type="button"
+            className="text-[10px] px-2 py-[2px] rounded border"
+            onClick={handleAdd}
+            aria-label={`Add ${(d.suggestedName || d.query || 'tool')} to ${(d.suggestedCategory || 'suggested lane')}`}
+          >
+            {`Add ${d.suggestedName || d.query || 'Tool'}`}
+          </button>
+          <button
+            type="button"
+            className="text-[10px] px-2 py-[2px] rounded border"
+            onClick={handleSearch}
+            aria-label={`Search for ${(d.query || d.suggestedName || '')}`}
+          >
+            <Search className="inline w-3 h-3 mr-1" />Search
+          </button>
         </div>
       </div>
     </div>
