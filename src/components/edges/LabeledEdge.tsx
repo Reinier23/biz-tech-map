@@ -1,16 +1,18 @@
-import React from 'react';
-import { BaseEdge, EdgeLabelRenderer, getBezierPath, useStore } from '@xyflow/react';
+import React, { useState } from 'react';
+import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, useStore } from '@xyflow/react';
 import type { EdgeProps } from '@xyflow/react';
 
 const LabeledEdge: React.FC<EdgeProps> = (props) => {
-  const { id, label, style, markerEnd } = props;
-  const [edgePath, labelX, labelY] = getBezierPath(props as any);
+  const { id, style, markerEnd } = props;
+  const [edgePath, labelX, labelY] = getSmoothStepPath(props as any);
   const zoom = useStore((s) => s.transform[2]);
+  const [hovered, setHovered] = useState(false);
+  const labelText = (props as any)?.data?.label ?? (props as any)?.label;
 
   return (
     <>
-      <BaseEdge id={id} path={edgePath} style={{ stroke: '#CBD5E1', strokeWidth: 2, ...(style || {}) }} markerEnd={markerEnd} />
-      {label && zoom >= 0.5 && (
+      <BaseEdge id={id} path={edgePath} style={{ stroke: '#CBD5E1', strokeWidth: hovered ? 3 : 2, filter: hovered ? 'drop-shadow(0 0 6px rgba(148,163,184,0.6))' : undefined, transition: 'stroke-width 120ms ease', ...(style || {}) }} markerEnd={markerEnd} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} />
+      {labelText && zoom >= 0.5 && (
         <EdgeLabelRenderer>
           <div
             className="nodrag nopan"
@@ -27,7 +29,7 @@ const LabeledEdge: React.FC<EdgeProps> = (props) => {
               border: '1px solid hsl(var(--border))',
             }}
           >
-            {String(label)}
+            {String(labelText)}
           </div>
         </EdgeLabelRenderer>
       )}
