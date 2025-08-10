@@ -1,5 +1,5 @@
 import React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
@@ -15,11 +15,12 @@ const AuthModal: React.FC = () => {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Sign in to continue</DialogTitle>
+          <DialogDescription>Use email and password to sign in. You can enable Google later in Supabase.</DialogDescription>
         </DialogHeader>
         <div className="pt-2">
           <Auth
             supabaseClient={supabase}
-            providers={["google"]}
+            providers={[]}
             redirectTo={redirectTo}
             appearance={{
               theme: ThemeSupa,
