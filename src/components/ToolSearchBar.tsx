@@ -35,14 +35,29 @@ export const ToolSearchBar: React.FC<ToolSearchBarProps> = ({ onAddTool, existin
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Debounce query updates
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedQuery(query);
-      if (DEBUG) console.debug('[ToolSearchBar] Debounced query:', query);
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [query]);
+
+// Debounce query updates
+useEffect(() => {
+  const timer = setTimeout(() => {
+    setDebouncedQuery(query);
+    if (DEBUG) console.debug('[ToolSearchBar] Debounced query:', query);
+  }, 250);
+  return () => clearTimeout(timer);
+}, [query]);
+
+// Listen for prefill events from elsewhere (e.g., GhostNode)
+useEffect(() => {
+  const handler = (e: Event) => {
+    const anyEvt = e as CustomEvent<string>;
+    const q = anyEvt.detail || '';
+    setQuery(q);
+    setShowSuggestions(true);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
+  window.addEventListener('toolsearch:prefill' as any, handler as any);
+  return () => window.removeEventListener('toolsearch:prefill' as any, handler as any);
+}, []);
+
 
   // Memoized fetch function to prevent recreation on every render
   const fetchSuggestions = useCallback(async (searchQuery: string) => {

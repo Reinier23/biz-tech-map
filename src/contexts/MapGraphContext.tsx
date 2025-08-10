@@ -2,8 +2,10 @@ import React, { createContext, useContext, useEffect, useMemo, useState, ReactNo
 import type { Node, Edge } from '@xyflow/react';
 import { MarkerType } from '@xyflow/react';
 import dagre from 'dagre';
+import ELK from 'elkjs/lib/elk.bundled.js';
 import { useTools } from '@/contexts/ToolsContext';
 import { supabase } from '@/integrations/supabase/client';
+import { getLayoutEngine } from '@/lib/config';
 
 // Category lanes in fixed order
 export const CATEGORY_LANES: string[] = [
@@ -43,6 +45,27 @@ export const LANE_COLORS: Record<string, string> = {
   'Ecommerce': '#0EA5E9',
   'Ops/NoCode': '#94A3B8',
   'Other': '#94A3B8',
+};
+
+const VENDOR_GROUPS: Record<string, string[]> = {
+  Microsoft: ['Microsoft 365','Azure','Power BI','Power Apps','Power Automate','Intune','Entra','SharePoint','OneDrive','Dynamics'],
+  Google: ['Google Workspace','Google Analytics','Google Ads','BigQuery','Looker','GCP','Google Cloud'],
+  Atlassian: ['Jira','Confluence','Trello','Bitbucket','Statuspage','Opsgenie'],
+  AWS: ['AWS','Redshift','CloudWatch','ECS','EKS'],
+  Salesforce: ['Salesforce','Pardot','Tableau','MuleSoft'],
+  HubSpot: ['HubSpot','HubSpot CRM','CMS Hub','Service Hub','Marketing Hub','Sales Hub'],
+  Zendesk: ['Zendesk','Zendesk Sell'],
+  ServiceNow: ['ServiceNow'],
+  Adobe: ['Adobe Analytics','Adobe Marketo','Adobe Creative Cloud'],
+  Oracle: ['Oracle','Eloqua'],
+  SAP: ['SAP'],
+  Stripe: ['Stripe'],
+  Twilio: ['Twilio','Segment'],
+  Snowflake: ['Snowflake'],
+  MongoDB: ['MongoDB'],
+  Datadog: ['Datadog'],
+  Cloudflare: ['Cloudflare'],
+  Shopify: ['Shopify'],
 };
 
 interface MapGraphContextType {
@@ -105,65 +128,195 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
   }, [tools]);
 
   const layout = useMemo(() => {
-    return () => {
-      const newNodes: Node[] = [];
+    const elk = new ELK();
 
+    const sortByVendors = (list: typeof tools) => {
+      const buckets: Record<string, typeof tools> = {};
+      const vendorOrder = Object.keys(VENDOR_GROUPS);
+      vendorOrder.forEach(v => (buckets[v] = []));
+      const ungrouped: typeof tools = [];
+      for (const t of list) {
+        const name = t.name;
+        const matchVendor = vendorOrder.find(v => VENDOR_GROUPS[v].some(n => name.toLowerCase().includes(n.toLowerCase())));
+        if (matchVendor) buckets[matchVendor].push(t); else ungrouped.push(t);
+      }
+      const ordered: typeof tools = [];
+      vendorOrder.forEach(v => ordered.push(...buckets[v].sort((a,b)=>a.name.localeCompare(b.name))));
+      ordered.push(...ungrouped.sort((a,b)=>a.name.localeCompare(b.name)));
+      return ordered;
+    };
+
+    const knownPairLabel = (aCat: string, bCat: string, rel?: string) => {
+      if (rel) return rel;
+      if (aCat === 'Marketing' && bCat === 'Sales') return 'Leads';
+      if (aCat === 'Sales' && bCat === 'Marketing') return 'Leads';
+      if ((aCat === 'Service' && bCat === 'Comms') || (aCat === 'Comms' && bCat === 'Service')) return 'Tickets/Notifications';
+      if (aCat === 'Data' && bCat === 'Analytics') return 'Models/Reports';
+      if (aCat === 'Analytics' && bCat === 'Data') return 'Models/Reports';
+      if ((aCat === 'ERP' && bCat === 'Finance') || (aCat === 'Finance' && bCat === 'ERP')) return 'Orders/Invoices';
+      return undefined;
+    };
+
+    const computeLaneWithDagre = (laneTools: typeof tools) => {
+      const g = new dagre.graphlib.Graph();
+      g.setGraph({ rankdir: 'LR', nodesep: GRAPH_NODE_SEP, ranksep: GRAPH_RANK_SEP });
+      g.setDefaultEdgeLabel(() => ({}));
+      laneTools.forEach((t) => g.setNode(`tool-${t.id}`, { width: NODE_WIDTH, height: NODE_HEIGHT }));
+      dagre.layout(g);
+      const pos: Record<string, { x: number; y: number }> = {};
+      laneTools.forEach((t) => {
+        const n = g.node(`tool-${t.id}`);
+        if (n) pos[t.id] = { x: Math.round(n.x), y: Math.round(n.y) };
+      });
+      return pos;
+    };
+
+    const computeLaneWithElk = async (laneTools: typeof tools) => {
+      const elkGraph: any = {
+        id: 'root',
+        layoutOptions: {
+          algorithm: 'layered',
+          inDirection: 'WEST',
+          outDirection: 'EAST',
+          'spacing.nodeNode': '80',
+          'spacing.edgeNode': '40',
+          'elk.layered.spacing.nodeNodeBetweenLayers': '80',
+        },
+        children: laneTools.map((t) => ({ id: `tool-${t.id}`, width: NODE_WIDTH, height: NODE_HEIGHT })),
+        edges: [],
+      };
+      const res = await elk.layout(elkGraph);
+      const pos: Record<string, { x: number; y: number }> = {};
+      (res.children || []).forEach((c: any) => {
+        const id = String(c.id).replace('tool-', '');
+        pos[id] = { x: Math.round(c.x || 0), y: Math.round(c.y || 0) };
+      });
+      return pos;
+    };
+
+    const buildGhostSuggestions = (buckets: Record<string, typeof tools>) => {
+      const suggestions: Array<{ lane: string; label: string; hint: string; name: string; category: string; query: string }> = [];
+      const totalTools = Object.values(buckets).reduce((acc, arr) => acc + arr.length, 0);
+      const lanesWithTools = Object.entries(buckets).filter(([_, arr]) => arr.length > 0).map(([k]) => k);
+      const has = (lane: string) => (buckets[lane] || []).length > 0;
+      const hasName = (names: string[]) => {
+        const lower = names.map(n => n.toLowerCase());
+        return Object.values(buckets).some(arr => arr.some(t => lower.some(n => t.name.toLowerCase().includes(n))));
+      };
+
+      // CDP
+      if (has('Marketing') && !hasName(['Segment']) && !has('Data')) {
+        suggestions.push({ lane: 'Data', label: 'Add your CDP', hint: 'Segment (CDP) helps unify customer events', name: 'Segment', category: 'Data', query: 'Segment' });
+      }
+      // SSO/IdP
+      if (totalTools >= 3 && lanesWithTools.length >= 2 && !has('Security')) {
+        suggestions.push({ lane: 'Security', label: 'Add SSO / IdP', hint: 'Protect access with Okta or Entra', name: 'Okta', category: 'Security', query: 'Okta' });
+      }
+      // Warehouse
+      if (hasName(['Tableau','Power BI','Looker']) && !hasName(['Snowflake','BigQuery','Redshift'])) {
+        suggestions.push({ lane: 'Data', label: 'Add a Data Warehouse', hint: 'Snowflake or BigQuery for central analytics', name: 'Snowflake', category: 'Data', query: 'Snowflake' });
+      }
+      // iPaaS
+      if (totalTools >= 5 && lanesWithTools.length >= 3 && !hasName(['Zapier','Make','Workato'])) {
+        suggestions.push({ lane: 'Ops/NoCode', label: 'Add iPaaS', hint: 'Automate workflows via Zapier/Make/Workato', name: 'Zapier', category: 'Ops/NoCode', query: 'Zapier' });
+      }
+      // Helpdesk
+      if (has('Comms') && !has('Service')) {
+        suggestions.push({ lane: 'Service', label: 'Add Helpdesk', hint: 'Zendesk or Freshdesk for support tickets', name: 'Zendesk', category: 'Service', query: 'Zendesk' });
+      }
+      // PM
+      if (has('Dev/IT') && !has('Project Management')) {
+        suggestions.push({ lane: 'Project Management', label: 'Add Project Management', hint: 'Try Jira or Asana to track work', name: 'Jira', category: 'Project Management', query: 'Jira' });
+      }
+      // Monitoring
+      if (hasName(['AWS','Azure','GCP','Google Cloud']) && !hasName(['Datadog'])) {
+        suggestions.push({ lane: 'Dev/IT', label: 'Add Monitoring', hint: 'Datadog for infra and app monitoring', name: 'Datadog', category: 'Dev/IT', query: 'Datadog' });
+      }
+      // MDM
+      if (hasName(['Microsoft 365']) && !hasName(['Intune','Jamf'])) {
+        suggestions.push({ lane: 'Security', label: 'Add Device Management', hint: 'Intune or Jamf for endpoint security', name: 'Intune', category: 'Security', query: 'Intune' });
+      }
+
+      return suggestions.slice(0, 3);
+    };
+
+    return async () => {
+      const newNodes: Node[] = [];
       let currentY = 0;
 
-      CATEGORY_LANES.forEach((category) => {
-        const laneTools = categorized[category] || [];
+      const ghostList = buildGhostSuggestions(categorized);
+
+      const idToCategory = new Map<string, string>();
+      tools.forEach((t) => idToCategory.set(t.id, (t.confirmedCategory || t.category || 'Other') as string));
+
+      for (const category of CATEGORY_LANES) {
+        const laneToolsRaw = categorized[category] || [];
+        const laneTools = sortByVendors(laneToolsRaw);
         const colorHex = laneSettings.colors?.[category] ?? LANE_COLORS[category] ?? '#94A3B8';
         const isCollapsed = !!collapsed[category];
 
         let laneHeight = LANE_VERTICAL_PADDING * 2;
         const toolNodes: Node[] = [];
 
-        if (!isCollapsed && laneTools.length > 0) {
-          // Build a dagre graph for this lane to keep node ordering stable
-          const g = new dagre.graphlib.Graph();
-          g.setGraph({ rankdir: 'LR', nodesep: GRAPH_NODE_SEP, ranksep: GRAPH_RANK_SEP });
-          g.setDefaultEdgeLabel(() => ({}));
+        const engine = getLayoutEngine();
 
-          laneTools
-            .slice()
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .forEach((t) => {
-              g.setNode(`tool-${t.id}`, { width: NODE_WIDTH, height: NODE_HEIGHT });
+        if (!isCollapsed) {
+          if (laneTools.length > 0) {
+            const positions = engine === 'elk' ? await computeLaneWithElk(laneTools) : computeLaneWithDagre(laneTools);
+            laneTools.forEach((t) => {
+              const p = positions[t.id];
+              if (!p) return;
+              if (engine === 'elk') {
+                const x = p.x;
+                const y = p.y;
+                laneHeight = Math.max(laneHeight, y + NODE_HEIGHT + LANE_VERTICAL_PADDING);
+                const logoUrl = t.logoUrl && typeof t.logoUrl === 'string' ? t.logoUrl : undefined;
+                toolNodes.push({
+                  id: `tool-${t.id}`,
+                  type: 'toolNode',
+                  position: { x: LANE_HORIZONTAL_PADDING + x, y: currentY + y },
+                  data: { label: t.name, category, logoUrl, colorHex },
+                });
+              } else {
+                const x = p.x;
+                const y = p.y;
+                laneHeight = Math.max(laneHeight, y + NODE_HEIGHT / 2 + LANE_VERTICAL_PADDING);
+                const logoUrl = t.logoUrl && typeof t.logoUrl === 'string' ? t.logoUrl : undefined;
+                toolNodes.push({
+                  id: `tool-${t.id}`,
+                  type: 'toolNode',
+                  position: { x: LANE_HORIZONTAL_PADDING + x, y: currentY + y - NODE_HEIGHT / 2 },
+                  data: { label: t.name, category, logoUrl, colorHex },
+                });
+              }
             });
-
-          dagre.layout(g);
-
-          // Determine lane height from laid out nodes
-          laneHeight = Math.max(laneHeight, LANE_VERTICAL_PADDING * 2);
-
-          laneTools.forEach((t) => {
-            const n = g.node(`tool-${t.id}`);
-            if (n) {
-              const x = Math.round(n.x);
-              const y = Math.round(n.y);
-              laneHeight = Math.max(laneHeight, y + NODE_HEIGHT / 2 + LANE_VERTICAL_PADDING);
-
-              const logoUrl = t.logoUrl && typeof t.logoUrl === 'string' ? t.logoUrl : undefined;
-
+          } else {
+            // Lane empty: place a ghost if available for this lane
+            const ghost = ghostList.find((g) => g.lane === category);
+            if (ghost) {
               toolNodes.push({
-                id: `tool-${t.id}`,
-                type: 'toolNode',
-                position: { x: LANE_HORIZONTAL_PADDING + x, y: currentY + y - NODE_HEIGHT / 2 },
+                id: `ghost-${category}`,
+                type: 'ghostNode',
+                position: { x: LANE_HORIZONTAL_PADDING + 16, y: currentY + LANE_VERTICAL_PADDING },
                 data: {
-                  label: t.name,
-                  category,
-                  logoUrl,
-                  colorHex,
+                  label: ghost.label,
+                  hint: ghost.hint,
+                  query: ghost.query,
+                  suggestedName: ghost.name,
+                  suggestedCategory: ghost.category,
+                  onAdd: (name: string, cat?: string) => {
+                    // handled via ToolsContext in the GhostNode consumer
+                  },
                 },
               });
+              laneHeight = Math.max(laneHeight, NODE_HEIGHT + LANE_VERTICAL_PADDING * 2);
             }
-          });
+          }
         }
 
         const headerOnlyHeight = 56;
         const computedLaneHeight = isCollapsed ? headerOnlyHeight : Math.max(laneHeight, NODE_HEIGHT + LANE_VERTICAL_PADDING * 2);
 
-        // Add lane background node spanning the width
         newNodes.push({
           id: `lane-${category}`,
           type: 'laneNode',
@@ -173,7 +326,7 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
             width: CANVAS_WIDTH,
             height: computedLaneHeight,
             colorHex,
-            count: laneTools.length,
+            count: laneToolsRaw.length,
             collapsed: isCollapsed,
             onToggle: () => setCollapsed((c) => ({ ...c, [category]: !c[category] })),
           },
@@ -184,7 +337,7 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
         newNodes.push(...toolNodes);
 
         currentY += computedLaneHeight;
-      });
+      }
 
       setNodes(newNodes);
 
@@ -201,31 +354,33 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
 
           results.forEach((res: any) => {
             if (res?.error || !res?.data) return;
-            (res.data as Array<{ source: string; target: string; relation_type: string }>).forEach((row) => {
+            (res.data as Array<{ source: string; target: string; relation_type: string }> ).forEach((row) => {
               let srcName = row.source;
               let tgtName = row.target;
-              const rel = row.relation_type as string;
+              const rel = row.relation_type as string | undefined;
 
-              // For syncs, treat as undirected and canonicalize to avoid duplicates
               if (rel === 'syncs') {
                 const [aName, bName] = [srcName, tgtName].sort((a, b) => a.localeCompare(b));
-                srcName = aName;
-                tgtName = bName;
+                srcName = aName; tgtName = bName;
               }
 
               const srcId = nameToId.get(srcName);
               const tgtId = nameToId.get(tgtName);
-              if (!srcId || !tgtId) return; // only draw when both tools exist
+              if (!srcId || !tgtId) return;
 
               const edgeId = rel === 'syncs' ? `${srcName}<->${tgtName}` : `${srcName}->${tgtName}`;
               if (edgeMap.has(edgeId)) return;
+
+              const aCat = idToCategory.get(srcId) || 'Other';
+              const bCat = idToCategory.get(tgtId) || 'Other';
+              const label = knownPairLabel(aCat, bCat, rel);
 
               edgeMap.set(edgeId, {
                 id: edgeId,
                 source: `tool-${srcId}`,
                 target: `tool-${tgtId}`,
-                label: rel,
-                type: 'smoothstep',
+                label,
+                type: 'labeledEdge',
                 markerEnd: { type: MarkerType.ArrowClosed },
                 style: { stroke: '#CBD5E1', strokeWidth: 2 },
               });
@@ -238,16 +393,16 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
         }
       })();
     };
-  }, [categorized, tools, laneSettings]);
+  }, [categorized, tools, laneSettings, collapsed]);
 
   useEffect(() => {
-    layout();
+    void (async () => { await layout(); })();
   }, [layout, tools, laneSettings]);
 
   const value: MapGraphContextType = {
     nodes,
     edges,
-    recompute: () => layout(),
+    recompute: () => { void layout(); },
   };
 
   return <MapGraphContext.Provider value={value}>{children}</MapGraphContext.Provider>;

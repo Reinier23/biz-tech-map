@@ -7,10 +7,12 @@ import { SEO } from '@/components/SEO';
 import { useTools } from '@/contexts/ToolsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { MapGraphProvider, useMapGraph, CATEGORY_LANES, LANE_COLORS } from '@/contexts/MapGraphContext';
-import { ReactFlow, Background, Controls, MiniMap, Panel } from '@xyflow/react';
+import { ReactFlow, Background, Controls, MiniMap, Panel, BackgroundVariant } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import ToolNode from '@/components/nodes/ToolNode';
 import LaneNode from '@/components/nodes/LaneNode';
+import GhostNode from '@/components/nodes/GhostNode';
+import LabeledEdge from '@/components/edges/LabeledEdge';
 import ChatCoach from '@/components/ChatCoach';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
@@ -20,11 +22,15 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { DEBUG } from '@/lib/config';
 const FlowInner: React.FC<{ containerRef: React.RefObject<HTMLDivElement>; headerText: string }> = ({ containerRef, headerText }) => {
   const { nodes, edges } = useMapGraph();
-  // Memoize nodeTypes to prevent recreation on every render
+  const savedViewport = useMemo(() => {
+    try { return JSON.parse(localStorage.getItem('techmap_viewport') || 'null'); } catch { return null; }
+  }, []);
+  // Memoize node & edge types
   const nodeTypes = useMemo(() => {
     if (DEBUG) console.debug('[TechMap] Creating nodeTypes');
-    return { toolNode: ToolNode, laneNode: LaneNode };
+    return { toolNode: ToolNode, laneNode: LaneNode, ghostNode: GhostNode } as any;
   }, []);
+  const edgeTypes = useMemo(() => ({ labeledEdge: LabeledEdge as any }), []);
 
   return (
     <Card className="h-[80vh]">
@@ -37,13 +43,18 @@ const FlowInner: React.FC<{ containerRef: React.RefObject<HTMLDivElement>; heade
             nodes={nodes}
             edges={edges}
             nodeTypes={nodeTypes}
-            fitView
+            edgeTypes={edgeTypes}
+            fitView={!savedViewport}
+            defaultViewport={savedViewport || undefined}
             proOptions={{ hideAttribution: true }}
             style={{ backgroundColor: 'hsl(var(--background))' }}
+            onMoveEnd={(_, viewport) => {
+              try { localStorage.setItem('techmap_viewport', JSON.stringify(viewport)); } catch {}
+            }}
           >
             <MiniMap zoomable pannable style={{ backgroundColor: 'hsl(var(--card))' }} />
             <Controls />
-            <Background />
+            <Background variant={BackgroundVariant.Dots} gap={24} size={1} />
           </ReactFlow>
         </div>
       </CardContent>
