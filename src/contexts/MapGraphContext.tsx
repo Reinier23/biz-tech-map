@@ -244,6 +244,7 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
 
     return async () => {
       const newNodes: Node[] = [];
+      const laneFirstToolId: Record<string, string> = {};
       let currentY = 0;
 
       const ghostList = buildGhostSuggestions(categorized);
@@ -254,6 +255,7 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
       for (const category of CATEGORY_LANES) {
         const laneToolsRaw = categorized[category] || [];
         const laneTools = sortByVendors(laneToolsRaw);
+        if (laneTools.length > 0) { laneFirstToolId[category] = laneTools[0].id; }
         const colorHex = laneSettings.colors?.[category] ?? LANE_COLORS[category] ?? '#94A3B8';
         const isCollapsed = !!collapsed[category];
 
@@ -344,6 +346,31 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
 
       setNodes(newNodes);
 
+      // Precompute lane-level relationship edges between representative tools
+      const laneEdges: Edge[] = [];
+      const addLaneEdge = (srcLane: string, tgtLane: string) => {
+        const srcToolId = laneFirstToolId[srcLane];
+        const tgtToolId = laneFirstToolId[tgtLane];
+        if (!srcToolId || !tgtToolId) return;
+        const id = `lane-${srcLane}->${tgtLane}`;
+        laneEdges.push({
+          id,
+          source: `tool-${srcToolId}`,
+          target: `tool-${tgtToolId}`,
+          label: knownPairLabel(srcLane, tgtLane),
+          type: 'labeledEdge',
+          markerEnd: { type: MarkerType.ArrowClosed },
+          style: { stroke: '#CBD5E1', strokeWidth: 2 },
+        });
+      };
+      // Known pairs
+      addLaneEdge('Marketing','Sales');
+      addLaneEdge('Service','Comms');
+      addLaneEdge('Comms','Service');
+      addLaneEdge('Data','Analytics');
+      addLaneEdge('ERP','Finance');
+      addLaneEdge('Finance','ERP');
+
       // Build integrations edges asynchronously
       const nameToId = new Map<string, string>();
       tools.forEach((t) => nameToId.set(t.name, t.id));
@@ -354,6 +381,7 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
           const results = await Promise.all(calls);
 
           const edgeMap = new Map<string, Edge>();
+          laneEdges.forEach((e) => { if (!edgeMap.has(e.id)) edgeMap.set(e.id, e); });
 
           results.forEach((res: any) => {
             if (res?.error || !res?.data) return;
