@@ -145,6 +145,15 @@ const TechMapPage: React.FC = () => {
     }
   }, [user, requireSignIn, createShareAndCopy]);
 
+  const handleToggleLayout = useCallback(() => {
+    try {
+      const current = localStorage.getItem('techmap_layout');
+      const next = current === 'elk' ? 'dagre' : 'elk';
+      localStorage.setItem('techmap_layout', next);
+      window.location.reload();
+    } catch {}
+  }, []);
+
   return (
     <>
       <SEO
@@ -180,6 +189,7 @@ const TechMapPage: React.FC = () => {
                 </DropdownMenu>
                 <Button variant="outline" size="sm" onClick={handleCreateShare} aria-label="Create share link">Create Share Link</Button>
                 <Link to="/settings"><Button variant="ghost" size="sm">Settings</Button></Link>
+                <Button variant="ghost" size="sm" onClick={handleToggleLayout} aria-label="Toggle layout engine">Layout</Button>
               </div>
             </div>
           </header>
