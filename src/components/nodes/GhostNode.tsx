@@ -12,8 +12,8 @@ interface GhostData {
   suggestedCategory?: string;
 }
 
-export const GhostNode: React.FC<NodeProps<GhostData>> = ({ data }) => {
-  const d = data;
+export const GhostNode: React.FC<NodeProps> = ({ data }) => {
+  const d = (data as unknown) as GhostData;
   const navigate = useNavigate();
 
   const handleSearch = () => {

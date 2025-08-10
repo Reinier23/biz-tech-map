@@ -1,10 +1,10 @@
 import React from 'react';
-import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, useStore } from '@xyflow/react';
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, useStore } from '@xyflow/react';
 import type { EdgeProps } from '@xyflow/react';
 
 const LabeledEdge: React.FC<EdgeProps> = (props) => {
   const { id, label, style, markerEnd } = props;
-  const [edgePath, labelX, labelY] = getSmoothStepPath(props);
+  const [edgePath, labelX, labelY] = getBezierPath(props as any);
   const zoom = useStore((s) => s.transform[2]);
 
   return (

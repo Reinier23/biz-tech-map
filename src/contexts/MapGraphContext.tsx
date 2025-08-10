@@ -95,7 +95,7 @@ const LANE_HORIZONTAL_PADDING = 24;
 const CANVAS_WIDTH = 1800; // wide enough background for most stacks
 
 export const MapGraphProvider: React.FC<Props> = ({ children }) => {
-  const { tools } = useTools();
+  const { tools, addTool } = useTools();
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [laneSettings, setLaneSettings] = useState<LaneSettings>({});
@@ -305,7 +305,8 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
                   suggestedName: ghost.name,
                   suggestedCategory: ghost.category,
                   onAdd: (name: string, cat?: string) => {
-                    // handled via ToolsContext in the GhostNode consumer
+                    const newId = typeof crypto !== 'undefined' && (crypto as any).randomUUID ? (crypto as any).randomUUID() : Math.random().toString(36).slice(2);
+                    addTool({ id: newId, name, category: cat || category, description: 'Added via suggestion' });
                   },
                 },
               });
