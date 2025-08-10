@@ -179,6 +179,63 @@ export type Database = {
         }
         Relationships: []
       }
+      tools: {
+        Row: {
+          arch_layer: string | null
+          category: string
+          confidence: number | null
+          confirmed_category: string | null
+          connections: Json
+          created_at: string
+          description: string | null
+          domain: string | null
+          id: string
+          importance_score: number
+          logo_url: string | null
+          manual_recommendation: string | null
+          name: string
+          updated_at: string
+          user_id: string
+          vendor: string | null
+        }
+        Insert: {
+          arch_layer?: string | null
+          category: string
+          confidence?: number | null
+          confirmed_category?: string | null
+          connections?: Json
+          created_at?: string
+          description?: string | null
+          domain?: string | null
+          id?: string
+          importance_score?: number
+          logo_url?: string | null
+          manual_recommendation?: string | null
+          name: string
+          updated_at?: string
+          user_id: string
+          vendor?: string | null
+        }
+        Update: {
+          arch_layer?: string | null
+          category?: string
+          confidence?: number | null
+          confirmed_category?: string | null
+          connections?: Json
+          created_at?: string
+          description?: string | null
+          domain?: string | null
+          id?: string
+          importance_score?: number
+          logo_url?: string | null
+          manual_recommendation?: string | null
+          name?: string
+          updated_at?: string
+          user_id?: string
+          vendor?: string | null
+        }
+        Relationships: []
+      }
       tools_catalog: {
         Row: {
           category: string
