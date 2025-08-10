@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { exportConsolidationPDF } from "@/lib/export";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { DEBUG } from "@/lib/config";
+import { logAudit } from "@/lib/audit";
 
 const currency = (n: number) => new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
 
@@ -183,6 +184,7 @@ const navigate = useNavigate();
     toast.success(`Applied ${count} changes`);
     setDrawerOpen(false);
     setStaged({});
+    void logAudit('suggestion_applied', { removed, added, stagedCount }).catch(() => {});
     navigate("/tech-map");
   }, [actionable, findToolForItem, staged, removeTool, addTool, tools, suggestedAlts, navigate]);
 

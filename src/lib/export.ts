@@ -15,6 +15,7 @@ export async function exportMapPNG(container: HTMLElement, filename = "tech-map.
     link.download = filename;
     link.href = dataUrl;
     link.click();
+    try { await logAudit('export_png', { filename, scope: 'map' }); } catch {}
   } catch (err) {
     console.error('Export PNG failed', err);
     throw err;

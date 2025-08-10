@@ -14,7 +14,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const brandfetchClientId = Deno.env.get('BRANDFETCH_CLIENT_ID');
+// Use free Brandfetch Logo Link API; no secret required
 
     const authHeader = req.headers.get('Authorization') || '';
     const isServiceRoleCall = authHeader === `Bearer ${supabaseKey}`;
@@ -90,7 +90,7 @@ serve(async (req) => {
         category: finalCategory,
         confirmedCategory: usedSuggested ? finalCategory : undefined,
         description: existingTool.description || `${toolName} - Business tool`,
-        logoUrl: existingTool.logourl || '',
+        logoUrl: existingTool.logourl || (existingTool.domain ? `https://logo.brandfetch.io/${existingTool.domain}` : ''),
         confidence: aiConfidence
       };
 
@@ -122,26 +122,14 @@ serve(async (req) => {
       }
     }
 
-    // Try to get logo if Brandfetch is configured
+    // Build free logo URL using Brandfetch Logo Link API
     let logoUrl = '';
-    if (brandfetchClientId) {
-      try {
-        // Extract domain from tool name (basic heuristic)
-        const domain = toolNameLower.replace(/\s+/g, '') + '.com';
-        const testLogoUrl = `https://cdn.brandfetch.io/${domain}?c=${brandfetchClientId}`;
-        
-        const logoResponse = await fetch(testLogoUrl, { 
-          method: 'HEAD',
-          signal: AbortSignal.timeout(3000)
-        });
-
-        if (logoResponse.ok) {
-          logoUrl = testLogoUrl;
-          confidence = Math.min(confidence + 10, 95);
-        }
-      } catch (error) {
-        console.log('Logo fetch failed, continuing without logo');
-      }
+    try {
+      const domain = toolNameLower.replace(/\s+/g, '') + '.com';
+      logoUrl = `https://logo.brandfetch.io/${domain}`;
+      // No network check needed; client will fallback on error
+    } catch (_) {
+      logoUrl = '';
     }
 
     const LOW = 70;
