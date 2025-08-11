@@ -12,12 +12,17 @@ import { ToolSuggestionDialog } from '@/components/ToolSuggestionDialog';
 import { brandfetchLogo } from '@/lib/utils';
 import { DEBUG } from '@/lib/config';
 
+// SaaS category allowlist (must match server-side filter)
+const ALLOWED_CATEGORIES = new Set([
+  'Marketing','Sales','Service','Comms','Project Management','Development','Dev/IT',
+  'Analytics','Finance','ERP','Security','Ecommerce','Data','Ops/NoCode','Knowledge'
+]);
+
 // Types for Supabase RPC response
-type SearchToolsRow = { name: string; domain: string | null; category: string; description: string | null };
+type SearchToolsRow = { name: string; domain: string | null; category: string | null; description: string | null };
 
 // Brandfetch logo helper imported from utils
 type UISuggestion = ToolSuggestion & { domain?: string };
-
 interface ToolSearchBarProps {
   onAddTool: (toolName: string, category?: string) => void;
   existingTools: Array<{name: string; category: string}>;
@@ -66,46 +71,58 @@ useEffect(() => {
       setIsLoading(true);
 
       const trimmed = (searchQuery || '').trim();
-      if (trimmed.length < 2) {
-        // Show curated local list for short/empty queries; avoid hitting RPC
+      console.log('[TSB] query=', searchQuery);
+      let qArg = trimmed;
+      if (trimmed.length === 0) {
+        qArg = '';
+      } else if (trimmed.length < 2) {
+        // Show curated local list for single-character queries; avoid hitting RPC
         const local = getToolSuggestions('', 8) as UISuggestion[];
-        const filtered = local.filter(suggestion =>
-          !existingTools.some(tool => tool.name.toLowerCase() === suggestion.name.toLowerCase())
-        );
+        const filtered = local
+          .filter(s => ALLOWED_CATEGORIES.has(s.category))
+          .filter(suggestion =>
+            !existingTools.some(tool => tool.name.toLowerCase() === suggestion.name.toLowerCase())
+          );
         setSuggestions(filtered);
         setIsLoading(false);
         return;
       }
 
-      const { data, error } = await (supabase as any).rpc('search_tools', { q: trimmed, lim: 10 });
+      const { data, error } = await (supabase as any).rpc('search_tools', { q: qArg, lim: 10 });
 
       if (error) throw error;
 
       const rows = (data || []) as SearchToolsRow[];
-const apiSuggestions: UISuggestion[] = Array.isArray(rows)
-  ? rows.map((row) => ({
-      id: row.domain ?? row.name?.toLowerCase().replace(/\s+/g, '-'),
-      name: row.name,
-      category: row.category,
-      description: row.description ?? '',
-      domain: row.domain ?? undefined,
-      logoUrl: row.domain ? brandfetchLogo(row.domain) : undefined,
-    }))
-   : [];
-if (DEBUG) {
-  console.debug('[ToolSearchBar] RPC rows:', rows);
-  console.debug('[ToolSearchBar] Mapped suggestions:', apiSuggestions);
-}
-      const filteredSuggestions = apiSuggestions.filter((suggestion: UISuggestion) =>
-        !existingTools.some(tool => tool.name.toLowerCase() === suggestion.name.toLowerCase())
-      );
+      const apiSuggestions: UISuggestion[] = Array.isArray(rows)
+        ? rows.map((row) => ({
+            id: row.domain ?? row.name?.toLowerCase().replace(/\s+/g, '-'),
+            name: row.name,
+            category: (row.category || 'Other'),
+            description: row.description ?? '',
+            domain: row.domain ?? undefined,
+            logoUrl: row.domain ? brandfetchLogo(row.domain) : undefined,
+          }))
+        : [];
+      console.log('[TSB] RPC rows:', rows);
+      console.log('[TSB] mapped suggestions:', apiSuggestions);
+      if (DEBUG) {
+        console.debug('[ToolSearchBar] RPC rows:', rows);
+        console.debug('[ToolSearchBar] Mapped suggestions:', apiSuggestions);
+      }
+      const filteredSuggestions = apiSuggestions
+        .filter((s: UISuggestion) => ALLOWED_CATEGORIES.has(s.category))
+        .filter((suggestion: UISuggestion) =>
+          !existingTools.some(tool => tool.name.toLowerCase() === suggestion.name.toLowerCase())
+        );
       setSuggestions(filteredSuggestions);
     } catch (error) {
       console.warn('RPC search failed, using local fallback:', error);
       const newSuggestions = getToolSuggestions(searchQuery, 8) as UISuggestion[];
-      const filteredSuggestions = newSuggestions.filter(suggestion =>
-        !existingTools.some(tool => tool.name.toLowerCase() === suggestion.name.toLowerCase())
-      );
+      const filteredSuggestions = newSuggestions
+        .filter(s => ALLOWED_CATEGORIES.has(s.category))
+        .filter(suggestion =>
+          !existingTools.some(tool => tool.name.toLowerCase() === suggestion.name.toLowerCase())
+        );
       setSuggestions(filteredSuggestions);
     } finally {
       setIsLoading(false);
@@ -208,6 +225,7 @@ if (DEBUG) {
     }, {} as Record<string, UISuggestion[]>);
   }, [suggestions]);
 
+  console.log('[TSB] rendering suggestions:', suggestions);
   return (
     <div ref={containerRef} className="relative w-full max-w-2xl mx-auto">
       <div className="relative">
@@ -309,7 +327,7 @@ if (DEBUG) {
                                       {highlightMatch(suggestion.name, query)}
                                     </div>
                                     <div className="text-xs text-muted-foreground line-clamp-1">
-                                      {suggestion.description}
+                                      {suggestion.domain || suggestion.description}
                                     </div>
                                   </div>
                                 </div>
