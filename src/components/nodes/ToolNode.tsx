@@ -12,7 +12,7 @@ function hexToRgba(hex: string, alpha: number) {
 }
 
 export const ToolNode: React.FC<NodeProps> = ({ data }) => {
-  const d = (data || {}) as { label?: string; logoUrl?: string; category?: string; colorHex?: string };
+  const d = (data || {}) as { label?: string; logoUrl?: string; category?: string; colorHex?: string; vendor?: string; domain?: string; archLayer?: string; confidence?: number };
   const label = d.label ?? '';
   const logoUrl = d.logoUrl as string | undefined;
   const category = d.category ?? 'Other';
@@ -28,7 +28,7 @@ export const ToolNode: React.FC<NodeProps> = ({ data }) => {
         <img
           src={logoUrl}
           alt={`${label} logo`}
-          className="w-8 h-8 rounded"
+          className="w-10 h-10 rounded"
           loading="lazy"
           crossOrigin="anonymous"
           onError={(e) => {
@@ -41,14 +41,21 @@ export const ToolNode: React.FC<NodeProps> = ({ data }) => {
           <Building className="w-4 h-4" />
         </div>
       )}
-      <div className="min-w-0 flex-1">
-        <div className="text-sm font-semibold text-foreground truncate" title={label}>{label}</div>
-        <div className="mt-1">
-          <span className="inline-flex items-center px-2 py-[2px] rounded-full text-[10px]" style={{ backgroundColor: pillBg, color: colorHex }}>
-            {category}
-          </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-semibold text-foreground truncate" title={label}>{label}</div>
+          <div className="mt-1 flex items-center justify-between gap-2">
+            <div className="truncate text-xs text-muted-foreground" title={d.vendor || d.domain || category}>
+              {d.vendor || d.domain || category}
+            </div>
+            {d.archLayer ? (
+              <span className="inline-flex items-center px-2 py-[1px] rounded-full text-[10px]" style={{ backgroundColor: pillBg, color: colorHex }}>
+                {d.archLayer}
+              </span>
+            ) : d.confidence != null ? (
+              <span className="text-[10px] text-muted-foreground">{Math.round((d.confidence || 0) * 100)}%</span>
+            ) : null}
+          </div>
         </div>
-      </div>
     </div>
   );
 };

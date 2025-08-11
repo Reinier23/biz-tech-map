@@ -434,8 +434,15 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
   }, [categorized, tools, laneSettings, collapsed]);
 
   useEffect(() => {
-    void (async () => { await layout(); })();
-  }, [layout, tools, laneSettings]);
+    let raf: number | null = null;
+    const id = window.setTimeout(() => {
+      raf = requestAnimationFrame(() => { void layout(); });
+    }, 50);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      clearTimeout(id);
+    };
+  }, [layout, toolsChangedKey, laneSettings, collapsed]);
 
   const value: MapGraphContextType = {
     nodes,

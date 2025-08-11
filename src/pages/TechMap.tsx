@@ -55,14 +55,19 @@ const FlowInner: React.FC<{ containerRef: React.RefObject<HTMLDivElement>; heade
             <MiniMap zoomable pannable style={{ backgroundColor: 'hsl(var(--card))' }} />
             <Controls />
             <Panel position="top-right">
-              <div className="text-xs text-muted-foreground bg-card/80 backdrop-blur rounded-md border px-3 py-2 space-y-1">
-                <div className="font-semibold">Legend</div>
-                <ul className="list-disc pl-4">
-                  <li>Marketing → Sales: Leads</li>
-                  <li>Service ↔ Comms: Tickets/Notifications</li>
-                  <li>Data → Analytics: Models/Reports</li>
-                  <li>ERP ↔ Finance: Orders/Invoices</li>
-                  <li>Labels visible at zoom ≥ 0.5</li>
+              <div className="text-xs text-muted-foreground bg-card/80 backdrop-blur rounded-md border px-3 py-2 space-y-2">
+                <div className="font-semibold">Lanes</div>
+                <ul className="space-y-1">
+                  {CATEGORY_LANES.map((lane) => (
+                    <li key={lane} className="flex items-center gap-2">
+                      <span
+                        className="inline-block w-3 h-3 rounded-sm"
+                        style={{ backgroundColor: LANE_COLORS[lane] || 'hsl(var(--muted))' }}
+                        aria-hidden="true"
+                      />
+                      <span>{lane}</span>
+                    </li>
+                  ))}
                 </ul>
               </div>
             </Panel>
