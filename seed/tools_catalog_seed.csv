@@ -1,0 +1,143 @@
+name,domain,category,description,aliases,keywords,popularity
+HubSpot,hubspot.com,Marketing,Marketing automation and CRM platform,"[""Hub Spot""]","[""marketing automation"",""crm"",""email""]",95
+Marketo,marketo.com,Marketing,Enterprise marketing automation platform,"[]","[""marketing automation"",""b2b marketing""]",88
+Salesforce,salesforce.com,Sales,Leading CRM platform,"[""SFDC""]","[""crm"",""sales"",""customer 360""]",100
+Pipedrive,pipedrive.com,Sales,Sales CRM for SMBs,"[]","[""crm"",""pipeline""]",82
+Zoho CRM,zoho.com/crm,Sales,CRM by Zoho for SMBs,"[""ZohoCRM""]","[""crm"",""sales""]",75
+Zendesk,zendesk.com,Service,Customer support and ticketing platform,"[]","[""support"",""helpdesk""]",97
+Intercom,intercom.com,Service,Customer messaging and support,"[]","[""chat"",""support"",""in-app messaging""]",92
+Freshdesk,freshdesk.com,Service,Customer support helpdesk software,"[]","[""helpdesk"",""support""]",80
+Slack,slack.com,Comms,Team messaging and collaboration,"[]","[""chat"",""messaging"",""collaboration""]",100
+Microsoft Teams,teams.microsoft.com,Comms,Microsoft collaboration and meetings,"[""MS Teams"",""Teams""]","[""chat"",""video"",""microsoft 365""]",98
+Zoom,zoom.us,Comms,Video conferencing platform,"[]","[""video"",""meetings"",""webinars""]",99
+Google Meet,meet.google.com,Comms,Video meetings by Google,"[]","[""video"",""meetings"",""workspace""]",90
+Webex,webex.com,Comms,Enterprise video conferencing,"[]","[""video"",""meetings""]",78
+Asana,asana.com,Project Management,Project and task management,"[]","[""projects"",""tasks"",""collaboration""]",96
+Trello,trello.com,Project Management,Kanban-style project boards,"[]","[""kanban"",""tasks""]",92
+Monday.com,monday.com,Project Management,Work management platform,"[""Monday"]","[""projects"",""work management""]",94
+ClickUp,clickup.com,Project Management,All-in-one productivity platform,"[]","[""projects"",""tasks"",""docs""]",85
+Smartsheet,smartsheet.com,Project Management,Spreadsheet-like project management,"[]","[""projects"",""sheets""]",80
+Basecamp,basecamp.com,Project Management,Project management and team communication,"[]","[""projects"",""pm""]",74
+Notion,notion.so,Knowledge,Workspace for docs, wikis and projects,"[]","[""docs"",""wiki"",""notes""]",95
+Confluence,atlassian.com/software/confluence,Knowledge,Team wiki and documentation,"[]","[""wiki"",""docs""]",86
+Coda,coda.io,Knowledge,All-in-one docs platform,"[]","[""docs"",""tables""]",76
+Airtable,airtable.com,Ops/NoCode,No-code database and apps,"[]","[""database"",""nocode"",""tables""]",92
+Zapier,zapier.com,Ops/NoCode,Automation between apps,"[]","[""automation"",""integrations""]",96
+Make,make.com,Ops/NoCode,Visual automation builder,"[""Integromat""]","[""automation"",""workflows""]",84
+Retool,retool.com,Ops/NoCode,Internal tools builder,"[]","[""internal tools"",""builder""]",78
+GitHub,github.com,Development,Code hosting and collaboration,"[]","[""git"",""code"",""ci""]",100
+GitLab,gitlab.com,Development,DevOps lifecycle platform,"[]","[""git"",""ci/cd"",""devops""]",92
+Bitbucket,bitbucket.org,Development,Code hosting by Atlassian,"[]","[""git"",""repos""]",78
+CircleCI,circleci.com,Development,CI/CD platform,"[]","[""ci"",""cd""]",86
+Jenkins,jenkins.io,Development,Automation server for CI/CD,"[]","[""ci"",""automation""]",80
+Azure DevOps,azure.microsoft.com/services/devops,Development,Microsoft DevOps services,"[""ADO"",""VSTS""]","[""devops"",""ci/cd""]",85
+SonarQube,sonarsource.com/products/sonarqube,Development,Code quality and security scanning,"[]","[""code quality"",""security""]",78
+Snyk,snyk.io,Development,Developer-first security platform,"[]","[""sast"",""sca"",""security""]",82
+Postman,postman.com,Development,API development and testing,"[]","[""api"",""testing""]",88
+Datadog,datadoghq.com,Dev/IT,Monitoring and observability,"[]","[""monitoring"",""apm"",""logs""]",96
+New Relic,newrelic.com,Dev/IT,Full-stack observability,"[]","[""apm"",""monitoring""]",86
+Splunk,splunk.com,Dev/IT,Observability and SIEM,"[]","[""logs"",""siem"",""observability""]",88
+Elastic,elastic.co,Dev/IT,Elasticsearch stack and observability,"[""ELK"",""Elastic Stack""]","[""search"",""logs"",""observability""]",85
+PagerDuty,pagerduty.com,Dev/IT,Incident response platform,"[]","[""incidents"",""on-call""]",90
+Opsgenie,opsgenie.com,Dev/IT,On-call and incident management,"[]","[""incidents"",""on-call""]",82
+ServiceNow,servicenow.com,Service,IT service management platform,"[]","[""itsm"",""tickets""]",95
+Jira Service Management,atlassian.com/software/jira/service-management,Service,ITSM by Atlassian,"[]","[""itsm"",""tickets"",""jira""]",88
+Freshservice,freshworks.com/freshservice,Service,IT service management,"[]","[""itsm"",""service desk""]",80
+Okta,okta.com,Security,Identity and SSO platform,"[]","[""sso"",""iam"",""mfa""]",95
+Auth0,auth0.com,Security,Authentication and authorization,"[]","[""auth"",""jwt"",""sso""]",92
+Duo Security,duo.com,Security,MFA and access security,"[]","[""mfa"",""2fa""]",84
+1Password,1password.com,Security,Password manager for teams,"[]","[""passwords"",""vault""]",88
+LastPass,lastpass.com,Security,Password manager,"[]","[""passwords"",""vault""]",76
+CrowdStrike,crowdstrike.com,Security,Endpoint protection and EDR,"[]","[""edr"",""endpoint""]",90
+SentinelOne,sentinelone.com,Security,Autonomous endpoint security,"[]","[""edr"",""endpoint""]",84
+Snowflake,snowflake.com,Data,Cloud data platform,"[]","[""data warehouse"",""lakehouse""]",96
+Databricks,databricks.com,Data,Data engineering and AI platform,"[]","[""spark"",""lakehouse""]",92
+BigQuery,cloud.google.com/bigquery,Data,Google data warehouse,"[]","[""data warehouse"",""gcp""]",90
+Redshift,aws.amazon.com/redshift,Data,Amazon data warehouse,"[]","[""data warehouse"",""aws""]",88
+Fivetran,fivetran.com,Data,Managed data pipelines,"[]","[""elt"",""pipelines""]",88
+Stitch,stitchdata.com,Data,Data integration for analytics,"[]","[""elt"",""integration""]",76
+Airbyte,airbyte.com,Data,Open-source data integration,"[]","[""elt"",""connectors""]",80
+dbt,dbt.com,Data,Data transformation framework,"[""dbt Core"",""dbt Cloud""]","[""transformation"",""sql""]",86
+Tableau,tableau.com,Analytics,Data visualization platform,"[]","[""bi"",""dashboards""]",94
+Looker,looker.com,Analytics,BI and data exploration,"[]","[""bi"",""dashboards""]",90
+Power BI,powerbi.microsoft.com,Analytics,Microsoft BI platform,"[]","[""bi"",""dashboards"",""microsoft""]",95
+Qlik,qlik.com,Analytics,Analytics and BI platform,"[]","[""bi"",""analytics""]",80
+Mixpanel,mixpanel.com,Analytics,Product analytics for apps,"[]","[""product analytics"",""events""]",88
+Amplitude,amplitude.com,Analytics,Product analytics and growth,"[]","[""product analytics"",""funnels""]",86
+Heap,heap.io,Analytics,Product analytics with auto-capture,"[]","[""product analytics"",""events""]",80
+Hotjar,hotjar.com,Analytics,Heatmaps and session recordings,"[]","[""heatmaps"",""recordings""]",82
+FullStory,fullstory.com,Analytics,Digital experience analytics,"[]","[""session replay"",""dx""]",84
+Optimizely,optimizely.com,Analytics,Experimentation platform,"[]","[""ab testing"",""experiments""]",82
+VWO,vwo.com,Analytics,Conversion optimization platform,"[]","[""ab testing"",""experiments""]",78
+Shopify,shopify.com,Ecommerce,Ecommerce platform for online stores,"[]","[""ecommerce"",""storefront""]",96
+Magento,magento.com,Ecommerce,Adobe commerce platform,"[""Adobe Commerce""]","[""ecommerce"",""storefront""]",84
+BigCommerce,bigcommerce.com,Ecommerce,Open SaaS ecommerce platform,"[]","[""ecommerce"",""storefront""]",82
+WooCommerce,woocommerce.com,Ecommerce,Ecommerce for WordPress,"[]","[""wordpress"",""storefront""]",80
+Stripe,stripe.com,Finance,Online payments infrastructure,"[]","[""payments"",""billing""]",98
+Adyen,adyen.com,Finance,Global payment processing,"[]","[""payments"",""pos""]",86
+Braintree,braintreepayments.com,Finance,Payments processing by PayPal,"[]","[""payments"",""gateway""]",80
+Chargebee,chargebee.com,Finance,Subscription billing and revenue,"[]","[""billing"",""subscriptions""]",86
+Recurly,recurly.com,Finance,Subscription management and billing,"[]","[""billing"",""subscriptions""]",80
+Zuora,zuora.com,Finance,Subscription billing and revenue operations,"[]","[""billing"",""subscriptions""]",84
+QuickBooks Online,qbo.intuit.com,Finance,Accounting for SMBs,"[""QuickBooks"",""QBO""]","[""accounting"",""invoicing""]",90
+Xero,xero.com,Finance,Cloud accounting software,"[]","[""accounting"",""invoicing""]",84
+NetSuite,netsuite.com,ERP,Cloud ERP suite by Oracle,"[]","[""erp"",""finance""]",92
+SAP S/4HANA,sap.com/products/s4hana.html,ERP,Enterprise ERP suite,"[""SAP""]","[""erp"",""enterprise""]",94
+Oracle ERP Cloud,oracle.com/erp,ERP,Oracle cloud ERP,"[]","[""erp"",""oracle""]",88
+Workday,workday.com,HR,HR and finance system,"[]","[""hris"",""payroll"",""erp""]",92
+Greenhouse,greenhouse.io,HR,Applicant tracking system,"[]","[""ats"",""recruiting""]",86
+Lever,lever.co,HR,Applicant tracking and recruiting,"[]","[""ats"",""recruiting""]",82
+BambooHR,bamboohr.com,HR,HRIS for SMBs,"[]","[""hris"",""hr""]",84
+Gusto,gusto.com,HR,Payroll and benefits,"[]","[""payroll"",""benefits""]",86
+Rippling,rippling.com,HR,All-in-one HR and IT,"[]","[""hris"",""device management""]",88
+Klaviyo,klaviyo.com,Marketing,Email and SMS marketing for ecommerce,"[]","[""email"",""sms"",""ecommerce""]",86
+Mailchimp,mailchimp.com,Marketing,Email marketing platform,"[]","[""email"",""marketing""]",92
+SendGrid,sendgrid.com,Comms,Transactional email service,"[]","[""email"",""smtp"",""api""]",90
+Mailgun,mailgun.com,Comms,Email API service,"[]","[""email"",""api"",""smtp""]",82
+Twilio,twilio.com,Comms,Programmable communications APIs,"[]","[""sms"",""voice"",""api""]",94
+Segment,segment.com,Data,Customer data platform,"[]","[""cdp"",""tracking"",""events""]",90
+Braze,braze.com,Marketing,Customer engagement platform,"[]","[""engagement"",""push"",""email""]",86
+Iterable,iterable.com,Marketing,Marketing automation and messaging,"[]","[""engagement"",""campaigns""]",82
+Hootsuite,hootsuite.com,Marketing,Social media management,"[]","[""social"",""scheduling""]",80
+Buffer,buffer.com,Marketing,Social media scheduling,"[]","[""social"",""scheduling""]",76
+Sprout Social,sproutsocial.com,Marketing,Social media management,"[]","[""social"",""analytics""]",78
+Canva,canva.com,Marketing,Design tool for teams,"[]","[""design"",""graphics""]",88
+Figma,figma.com,Development,Design and prototyping platform,"[]","[""design"",""prototype""]",94
+Miro,miro.com,Knowledge,Online whiteboard collaboration,"[]","[""whiteboard"",""collaboration""]",92
+Lucidchart,lucidchart.com,Knowledge,Diagramming and flowcharts,"[]","[""diagram"",""flowchart""]",86
+Calendly,calendly.com,Sales,Scheduling meetings,"[]","[""calendar"",""meetings""]",88
+DocuSign,docusign.com,Sales,E-signature and agreements,"[]","[""esign"",""contracts""]",92
+HelloSign,hellosign.com,Sales,E-signatures by Dropbox,"[""Dropbox Sign""]","[""esign"",""contracts""]",82
+Dropbox,dropbox.com,Knowledge,Cloud file storage and sharing,"[]","[""storage"",""files""]",90
+Box,box.com,Knowledge,Content management and sharing,"[]","[""storage"",""files"",""content""]",86
+Google Drive,drive.google.com,Knowledge,Cloud file storage by Google,"[]","[""storage"",""files"",""google""]",90
+OneDrive,onedrive.live.com,Knowledge,Microsoft cloud file storage,"[]","[""storage"",""files"",""microsoft""]",88
+SharePoint,sharepoint.com,Knowledge,Microsoft content and intranet,"[]","[""intranet"",""content"",""microsoft""]",86
+Smartsheet,smartsheet.com,Project Management,Work management sheets,"[]","[""projects"",""sheets""]",80
+Basecamp,basecamp.com,Project Management,Simple project management,"[]","[""pm"",""projects""]",74
+Airtable,airtable.com,Ops/NoCode,Flexible database and apps,"[]","[""database"",""nocode""]",92
+ClickUp,clickup.com,Project Management,Tasks, docs, goals in one,"[]","[""tasks"",""docs"",""goals""]",85
+Workato,workato.com,Ops/NoCode,Enterprise automation platform,"[]","[""automation"",""integration""]",84
+Mulesoft,mulesoft.com,Dev/IT,Enterprise integration platform,"[]","[""integration"",""api""]",86
+Apigee,cloud.google.com/apigee,Dev/IT,API management by Google,"[]","[""api gateway"",""management""]",82
+Kong,konghq.com,Dev/IT,Cloud-native API gateway,"[]","[""api"",""gateway""]",80
+Tines,tines.com,Security,Security automation (SOAR),"[]","[""soar"",""automation""]",78
+ThreatLocker,threatlocker.com,Security,Zero trust endpoint security,"[]","[""zero trust"",""endpoint""]",70
+Netskope,netskope.com,Security,Cloud security platform,"[]","[""casb"",""sse"",""secure web""]",78
+Zscaler,zscaler.com,Security,Zero trust network access,"[]","[""ztna"",""sase""]",82
+GitGuardian,gitguardian.com,Security,Secrets scanning for code,"[]","[""secrets"",""scanning""]",76
+Jamf,jamf.com,Dev/IT,Apple device management,"[]","[""mdm"",""apple""]",78
+Intune,intune.microsoft.com,Dev/IT,Endpoint and device management,"[""Microsoft Intune""]","[""mdm"",""microsoft""]",84
+Procore,procore.com,ERP,Construction management platform,"[]","[""construction"",""erp""]",70
+Smartsheet Control Center,smartsheet.com/platform/control-center,Project Management,Portfolio management in Smartsheet,"[]","[""ppm"",""projects""]",68
+Salesloft,salesloft.com,Sales,Sales engagement platform,"[]","[""sequencing"",""outreach""]",84
+Outreach,outreach.io,Sales,Sales engagement and sequences,"[]","[""engagement"",""sequencing""]",86
+Apollo,apollo.io,Sales,Prospecting and enrichment,"[""Apollo.io""]","[""prospecting"",""data""]",82
+Close CRM,close.com,Sales,Inside sales CRM,"[]","[""crm"",""calling""]",78
+Freshsales,freshworks.com/crm,Sales,CRM by Freshworks,"[]","[""crm"",""sales""]",76
+Pendo,pendo.io,Analytics,Product experience analytics,"[]","[""px"",""guides"",""analytics""]",78
+WalkMe,walkme.com,Analytics,Digital adoption platform,"[]","[""dap"",""guidance""]",74
+Gainsight,gainsight.com,Service,Customer success platform,"[]","[""cs"",""success""]",80
+ChurnZero,churnzero.com,Service,Customer success for SaaS,"[]","[""cs"",""success""]",74
+Gong,gong.io,Sales,Revenue intelligence,"[]","[""call recording"",""analytics""]",80
+Clari,clari.com,Sales,Revenue forecasting,"[]","[""forecasting"",""revenue""]",76

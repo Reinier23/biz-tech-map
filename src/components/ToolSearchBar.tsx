@@ -15,11 +15,11 @@ import { DEBUG } from '@/lib/config';
 // SaaS category allowlist (must match server-side filter)
 const ALLOWED_CATEGORIES = new Set([
   'Marketing','Sales','Service','Comms','Project Management','Development','Dev/IT',
-  'Analytics','Finance','ERP','Security','Ecommerce','Data','Ops/NoCode','Knowledge'
+  'Analytics','Finance','ERP','Security','Ecommerce','Data','Ops/NoCode','Knowledge','HR'
 ]);
 
 // Types for Supabase RPC response
-type SearchToolsRow = { name: string; domain: string | null; category: string | null; description: string | null };
+type SearchToolsRow = { name: string; domain: string | null; category: string | null; description: string | null; logo_url: string | null };
 
 // Brandfetch logo helper imported from utils
 type UISuggestion = ToolSuggestion & { domain?: string };
@@ -100,7 +100,7 @@ useEffect(() => {
             category: (row.category || 'Other'),
             description: row.description ?? '',
             domain: row.domain ?? undefined,
-            logoUrl: row.domain ? brandfetchLogo(row.domain) : undefined,
+            logoUrl: (row.logo_url ?? (row.domain ? brandfetchLogo(row.domain) : undefined)) || undefined,
           }))
         : [];
       console.log('[TSB] RPC rows:', rows);
