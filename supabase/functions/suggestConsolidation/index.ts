@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,6 +19,19 @@ interface ConsolidationResult {
   reason: string;
 }
 
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 10;
+const requestLog = new Map<string, number[]>();
+
+function checkRate(uid: string) {
+  const now = Date.now();
+  const arr = (requestLog.get(uid) ?? []).filter(t => now - t < RATE_LIMIT_WINDOW_MS);
+  if (arr.length >= RATE_LIMIT_MAX) return false;
+  arr.push(now);
+  requestLog.set(uid, arr);
+  return true;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -25,16 +39,91 @@ serve(async (req) => {
   }
 
   try {
-    const { tools }: { tools: Tool[] } = await req.json()
+    // Auth: ensure the caller is authenticated
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return new Response(
+        JSON.stringify({ error: 'Supabase credentials not configured' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
-    if (!tools || !Array.isArray(tools)) {
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: req.headers.get('Authorization') || '' } }
+    });
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    if (!checkRate(user.id)) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded' }),
+        {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    const { tools }: { tools: Tool[] } = await req.json();
+
+    if (!tools || !Array.isArray(tools) || tools.length === 0) {
       return new Response(
         JSON.stringify({ error: 'Invalid input: tools array required' }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
-      )
+      );
+    }
+
+    if (tools.length > 25) {
+      return new Response(
+        JSON.stringify({ error: 'Too many tools (max 25)' }),
+        { 
+          status: 413, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Validate individual tool fields and clamp description length
+    for (const t of tools) {
+      if (!t || typeof t.name !== 'string' || typeof t.category !== 'string') {
+        return new Response(
+          JSON.stringify({ error: 'Each tool must include name and category' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      if (t.name.length > 120) {
+        return new Response(
+          JSON.stringify({ error: `Tool name too long: ${t.name}` }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      if (t.description && t.description.length > 2000) {
+        t.description = t.description.slice(0, 2000);
+      }
+    }
+
+    // Check approximate payload size (bytes)
+    const payloadSize = new TextEncoder().encode(JSON.stringify(tools)).length;
+    if (payloadSize > 256_000) {
+      return new Response(
+        JSON.stringify({ error: 'Payload too large (limit 256KB)' }),
+        { status: 413, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
@@ -63,18 +152,22 @@ serve(async (req) => {
           })
           continue
         }
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${openaiApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'gpt-4.1-2025-04-14',
-            messages: [
-              {
-                role: 'system',
-                content: `You are an expert in business software consolidation specializing in HubSpot's capabilities. Analyze whether HubSpot can replace the given tool based on comprehensive feature comparison.
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        let response: Response;
+        try {
+          response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${openaiApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'gpt-4.1-2025-04-14',
+              messages: [
+                {
+                  role: 'system',
+                  content: `You are an expert in business software consolidation specializing in HubSpot's capabilities. Analyze whether HubSpot can replace the given tool based on comprehensive feature comparison.
 
 HubSpot's Complete Capabilities:
 
@@ -136,40 +229,44 @@ RECOMMENDATION CRITERIA:
 - "No Match": HubSpot covers <50% of core functionality or serves different use case
 
 Consider tool complexity, industry-specific features, and integration requirements in your analysis.`
-              },
-              {
-                role: 'user',
-                content: `Analyze this tool:
+                },
+                {
+                  role: 'user',
+                  content: `Analyze this tool:
 Name: ${tool.name}
 Category: ${tool.category}
 Description: ${tool.description || 'No description provided'}`
-              }
-            ],
-            functions: [
-              {
-                name: 'analyze_consolidation',
-                description: 'Analyze if HubSpot can replace or partially replace a business tool',
-                parameters: {
-                  type: 'object',
-                  properties: {
-                    recommendation: {
-                      type: 'string',
-                      enum: ['Replace', 'Evaluate', 'No Match'],
-                      description: 'Whether HubSpot can replace this tool'
-                    },
-                    reason: {
-                      type: 'string',
-                      description: 'Brief explanation for the recommendation'
-                    }
-                  },
-                  required: ['recommendation', 'reason']
                 }
-              }
-            ],
-            function_call: { name: 'analyze_consolidation' },
-            temperature: 0.3,
-          }),
-        })
+              ],
+              functions: [
+                {
+                  name: 'analyze_consolidation',
+                  description: 'Analyze if HubSpot can replace or partially replace a business tool',
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      recommendation: {
+                        type: 'string',
+                        enum: ['Replace', 'Evaluate', 'No Match'],
+                        description: 'Whether HubSpot can replace this tool'
+                      },
+                      reason: {
+                        type: 'string',
+                        description: 'Brief explanation for the recommendation'
+                      }
+                    },
+                    required: ['recommendation', 'reason']
+                  }
+                }
+              ],
+              function_call: { name: 'analyze_consolidation' },
+              temperature: 0.3,
+            }),
+            signal: controller.signal,
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
 
         if (!response.ok) {
           console.error('OpenAI API error:', await response.text())

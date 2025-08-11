@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.enrichToolData]
 verify_jwt = true
+
+[functions.suggestConsolidation]
+verify_jwt = true
