@@ -145,14 +145,14 @@ const AuditPage: React.FC = () => {
             {/* Event type */}
             <div className="md:col-span-1">
               <Select 
-                value={eventType ?? ''} 
-                onValueChange={(v) => { setEventType(v || null); resetPageOnFilter(); }}
+                value={eventType ?? '__all__'} 
+                onValueChange={(v) => { setEventType(v === '__all__' ? null : v); resetPageOnFilter(); }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Event type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All events</SelectItem>
+                  <SelectItem value="__all__">All events</SelectItem>
                   {(eventTypes || []).map((et) => (
                     <SelectItem key={et} value={et}>{et}</SelectItem>
                   ))}
