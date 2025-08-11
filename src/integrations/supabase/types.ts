@@ -238,33 +238,45 @@ export type Database = {
       }
       tools_catalog: {
         Row: {
+          aliases: string[] | null
           category: string
           created_at: string
           description: string | null
           domain: string | null
           id: string
+          keywords: string[] | null
+          logo_url: string | null
           logourl: string | null
           name: string
+          popularity: number | null
           updated_at: string
         }
         Insert: {
+          aliases?: string[] | null
           category: string
           created_at?: string
           description?: string | null
           domain?: string | null
           id: string
+          keywords?: string[] | null
+          logo_url?: string | null
           logourl?: string | null
           name: string
+          popularity?: number | null
           updated_at?: string
         }
         Update: {
+          aliases?: string[] | null
           category?: string
           created_at?: string
           description?: string | null
           domain?: string | null
           id?: string
+          keywords?: string[] | null
+          logo_url?: string | null
           logourl?: string | null
           name?: string
+          popularity?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -334,7 +346,20 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      tools_catalog_search_v: {
+        Row: {
+          alias: string | null
+          category: string | null
+          description: string | null
+          domain: string | null
+          id: string | null
+          keyword: string | null
+          logo_url: string | null
+          name: string | null
+          popularity: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       citext: {
@@ -376,6 +401,26 @@ export type Database = {
           relation_type: string
         }[]
       }
+      gtrgm_compress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_decompress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_in: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_options: {
+        Args: { "": unknown }
+        Returns: undefined
+      }
+      gtrgm_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
       has_role: {
         Args: {
           _user_id: string
@@ -398,7 +443,20 @@ export type Database = {
           domain: string
           category: string
           description: string
+          logo_url: string
         }[]
+      }
+      set_limit: {
+        Args: { "": number }
+        Returns: number
+      }
+      show_limit: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      show_trgm: {
+        Args: { "": string }
+        Returns: string[]
       }
     }
     Enums: {
