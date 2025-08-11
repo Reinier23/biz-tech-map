@@ -174,10 +174,10 @@ const LandingPage = () => {
             <div className="text-center lg:text-left space-y-8 max-w-xl mx-auto lg:mx-0">
               <p className="text-sm font-medium tracking-widest uppercase text-primary">AI-powered tech mapping</p>
               <h1 className="text-4xl lg:text-6xl font-bold text-foreground leading-tight font-sans">
-                See your entire tech stack, then cut costs with confidence
+                Unify Your Tech. Unlock Your Growth.
               </h1>
               <p className="text-lg lg:text-xl text-muted-foreground leading-relaxed">
-                Visualize every tool, find overlaps, and get AI suggestions to consolidate spend.
+                Break down silos, see your full stack, and make data-driven decisions with AI-powered insights.
               </p>
               <div className="pt-2 max-w-xl">
                 <EmailForm label="Get Early Access" size="large" />
