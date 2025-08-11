@@ -104,18 +104,21 @@ export type Database = {
           id: string
           is_public: boolean
           payload: Json
+          user_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           is_public?: boolean
           payload: Json
+          user_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           is_public?: boolean
           payload?: Json
+          user_id?: string | null
         }
         Relationships: []
       }
