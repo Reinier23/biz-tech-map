@@ -94,31 +94,5 @@ export const SampleDataLoader = ({ onDataLoaded }: SampleDataLoaderProps) => {
     setTools([]);
   };
 
-  return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>Sample Data for Testing</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          Load sample tools to test the consolidation suggestions flow.
-        </p>
-        <div className="flex flex-col gap-2">
-          <Button onClick={loadSampleData} variant="outline">
-            Load Sample Tools ({sampleTools.length} tools)
-          </Button>
-          {tools.length > 0 && (
-            <Button onClick={clearData} variant="ghost" size="sm">
-              Clear All Tools ({tools.length} loaded)
-            </Button>
-          )}
-        </div>
-        {tools.length > 0 && (
-          <div className="text-xs text-muted-foreground">
-            Current tools: {tools.map(t => t.name).join(', ')}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
+  return null;
 };
