@@ -10,6 +10,7 @@ import heroImage from "@/assets/tech-stack-consolidation-hero.jpg";
 
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
+import TypewriterText from "@/components/TypewriterText";
 
 const LandingPage = () => {
   const [email, setEmail] = useState("");
@@ -174,7 +175,12 @@ const LandingPage = () => {
             <div className="text-center lg:text-left space-y-8 max-w-xl mx-auto lg:mx-0">
               <p className="text-sm font-medium tracking-widest uppercase text-primary">AI-powered tech mapping</p>
               <h1 className="text-4xl lg:text-6xl font-bold text-foreground leading-tight font-sans">
-                Unify Your Tech. Unlock Growth. Cut Costs.
+                <TypewriterText
+                  phrases={["Unify Your Tech. Unlock Growth. Cut Costs."]}
+                  typingSpeed={32}
+                  pauseBetween={1400}
+                  loop={false}
+                />
               </h1>
               <p className="text-lg lg:text-xl text-muted-foreground leading-relaxed">
                 Break down silos, see your full stack, and use AI-powered insights to save money while driving smarter, faster growth.

@@ -124,3 +124,26 @@ All colors MUST be HSL.
   stroke-width: 3px !important;
   filter: drop-shadow(0 0 4px rgba(203,213,225,0.8));
 }
+
+/* Typewriter caret styles */
+.typewriter-caret::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 0.25rem;
+  background: currentColor;
+  vertical-align: -0.1em;
+  animation: caret-blink 1s steps(1, end) infinite;
+}
+
+@keyframes caret-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typewriter-caret::after {
+    animation: none;
+  }
+}
