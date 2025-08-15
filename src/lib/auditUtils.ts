@@ -1,4 +1,6 @@
-export function summarize(details: any, eventType: string): string {
+import type { AuditDetails } from './audit';
+
+export function summarize(details: AuditDetails, eventType: string): string {
   try {
     switch (eventType) {
       case 'tool_added':

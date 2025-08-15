@@ -34,7 +34,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const queue = [...pendingCallbacks.current];
         pendingCallbacks.current = [];
         queue.forEach((fn) => {
-          try { fn(); } catch {}
+          try { 
+            fn(); 
+          } catch (error) {
+            console.error('Error executing queued callback after sign-in:', error);
+          }
         });
         setModalOpen(false);
         openedByGuard.current = false;

@@ -13,6 +13,16 @@ import { fetchShare } from '@/lib/share';
 import { ToolsProvider } from '@/contexts/ToolsContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft } from 'lucide-react';
+import type { Tool } from '@/contexts/ToolsContext';
+import type { AnalyzedItem } from '@/lib/ruleEngine';
+
+interface SharePayload {
+  tools: Tool[];
+  latestAnalysis: AnalyzedItem[];
+  techMapMeta?: {
+    timestamp: number;
+  };
+}
 
 const FlowInner: React.FC<{ containerRef: React.RefObject<HTMLDivElement>; headerText: string }> = ({ containerRef, headerText }) => {
   const { nodes, edges } = useMapGraph();
@@ -45,7 +55,7 @@ const FlowInner: React.FC<{ containerRef: React.RefObject<HTMLDivElement>; heade
 
 const SharePage: React.FC = () => {
   const { id } = useParams();
-  const [payload, setPayload] = useState<any | null>(null);
+  const [payload, setPayload] = useState<SharePayload | null>(null);
   const [loading, setLoading] = useState(true);
   const mapRef = useRef<HTMLDivElement>(null);
 
@@ -94,7 +104,7 @@ const SharePage: React.FC = () => {
   const companyName = 'Your Company';
   const headerText = `Shared Tech Map — ${companyName} — ${new Date(payload.techMapMeta?.timestamp || Date.now()).toLocaleString()}`;
 
-  const tools = (payload.tools || []).map((t: any, idx: number) => ({
+  const tools = (payload.tools || []).map((t: Tool, idx: number) => ({
     id: `${idx}-${t.name}`,
     name: t.name,
     category: t.category,
@@ -136,13 +146,13 @@ const SharePage: React.FC = () => {
               <Card>
                 <CardContent className="pt-4">
                   <div className="text-sm text-muted-foreground">Replace / Evaluate</div>
-                  <div className="text-2xl font-semibold">{payload.latestAnalysis.filter((x: any) => x.action === 'Replace' || x.action === 'Evaluate').length}</div>
+                  <div className="text-2xl font-semibold">{payload.latestAnalysis.filter((x: AnalyzedItem) => x.action === 'Replace' || x.action === 'Evaluate').length}</div>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="pt-4">
                   <div className="text-sm text-muted-foreground">Keep</div>
-                  <div className="text-2xl font-semibold">{payload.latestAnalysis.filter((x: any) => x.action === 'Keep').length}</div>
+                  <div className="text-2xl font-semibold">{payload.latestAnalysis.filter((x: AnalyzedItem) => x.action === 'Keep').length}</div>
                 </CardContent>
               </Card>
             </div>

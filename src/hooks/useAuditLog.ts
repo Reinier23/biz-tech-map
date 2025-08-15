@@ -1,11 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 import { DEBUG } from "@/lib/config";
+import type { AuditDetails } from "@/lib/audit";
 
 export type AuditRow = {
   id: string;
   timestamp: string;
   event_type: string;
-  details: any;
+  details: AuditDetails;
 };
 
 export type AuditFilters = {
@@ -79,7 +80,7 @@ export async function fetchEventTypes(): Promise<string[]> {
     ];
   }
   const set = new Set<string>();
-  (data || []).forEach((r: any) => set.add(r.event_type));
+  (data || []).forEach((r: { event_type: string }) => set.add(r.event_type));
   const values = Array.from(set);
   return values.length > 0 ? values : [
     'tool_added',

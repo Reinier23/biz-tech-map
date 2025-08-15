@@ -25,8 +25,8 @@ export const AssistantPanel: React.FC = () => {
   const onDismiss = (id: string) => setDismissed((prev) => new Set([...Array.from(prev), id]));
 
   const onAddTool = (name: string, category: string) => {
-    const newId = typeof crypto !== 'undefined' && (crypto as any).randomUUID
-      ? (crypto as any).randomUUID()
+    const newId = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
       : Math.random().toString(36).slice(2);
     addTool({ id: newId, name, category, description: 'Added via Assistant' });
     lastAddedRef.current = { id: newId, name };
@@ -117,8 +117,12 @@ export const AssistantPanel: React.FC = () => {
                 <div className="mt-4">
                   {/* Handoff CTA */}
                   {tools.length >= 10 && new Set(tools.map(t => (t.confirmedCategory || t.category))).size >= 5 && (
-                    <Button asChild className="mt-2" aria-label="Run consolidation analysis">
-                      <a href="/consolidation">Run Consolidation Analysis</a>
+                    <Button 
+                      className="mt-2" 
+                      aria-label="Run consolidation analysis"
+                      onClick={() => window.location.href = '/consolidation'}
+                    >
+                      <span>Run Consolidation Analysis</span>
                     </Button>
                   )}
                 </div>

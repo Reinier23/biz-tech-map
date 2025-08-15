@@ -4,10 +4,10 @@ import type { EdgeProps } from '@xyflow/react';
 
 const LabeledEdge: React.FC<EdgeProps> = (props) => {
   const { id, style, markerEnd } = props;
-  const [edgePath, labelX, labelY] = getSmoothStepPath(props as any);
+  const [edgePath, labelX, labelY] = getSmoothStepPath(props);
   const zoom = useStore((s) => s.transform[2]);
   const [hovered, setHovered] = useState(false);
-  const labelText = (props as any)?.data?.label ?? (props as any)?.label;
+  const labelText = props.data?.label ?? props.label;
 
   return (
     <>

@@ -28,8 +28,8 @@ export const GhostNode: React.FC<NodeProps> = ({ data }) => {
   const handleAdd = () => {
     const name = d.suggestedName || d.query;
     if (!name) return;
-    const id = typeof crypto !== 'undefined' && (crypto as any).randomUUID
-      ? (crypto as any).randomUUID()
+    const id = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
       : Math.random().toString(36).slice(2);
     const category = d.suggestedCategory || 'Other';
     addTool({ id, name, category, description: 'Added via ghost hint' });

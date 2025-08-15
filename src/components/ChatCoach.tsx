@@ -49,8 +49,8 @@ const ChatCoach: React.FC = () => {
       setLoading(true);
       try {
         const [{ data: gapsData, error: gapsErr }, { data: pbData, error: pbErr }] = await Promise.all([
-          (supabase as any).rpc('get_gap_questions', { tools_in: toolNames }),
-          (supabase as any).from('category_playbooks').select('category,must_have')
+          supabase.rpc('get_gap_questions', { tools_in: toolNames }),
+          supabase.from('category_playbooks').select('category,must_have')
         ]);
         if (gapsErr) console.error('get_gap_questions error', gapsErr);
         if (pbErr) console.error('category_playbooks error', pbErr);
@@ -71,7 +71,7 @@ const ChatCoach: React.FC = () => {
         body: { toolName: toolName.trim(), suggestedCategory }
       });
       if (error) throw error;
-      return data as any;
+      return data as { logoUrl?: string; description?: string; confidence?: number } | null;
     } catch (e) {
       console.warn('enrichToolData failed (continuing without enrichment)', e);
       return null;
@@ -80,22 +80,22 @@ const ChatCoach: React.FC = () => {
 
   const addSuggestedTool = useCallback(async (name: string, category: string) => {
     if (!name.trim()) return;
-    const id = `tool-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const id = `tool-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     // Optimistic add
     addTool({
-      id,
+      id: `tool-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       name,
       category,
       confirmedCategory: category,
       description: '',
       logoUrl: '',
       confidence: 0,
-    } as any);
+    });
 
     // Fire-and-forget enrichment (edges/relayout handled by MapGraphContext)
     const enriched = await enrichTool(name, category);
-    if (enriched?.logoUrl || enriched?.description) {
+    if (enriched && (enriched.logoUrl || enriched.description)) {
       toast({ title: `Added ${name}`, description: 'Enriched with details', variant: 'default' });
     } else {
       toast({ title: `Added ${name}`, description: 'Enrichment unavailable', variant: 'default' });

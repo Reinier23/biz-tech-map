@@ -1,9 +1,9 @@
-import React, { createContext, useContext, useEffect, useMemo, useRef, useState, ReactNode } from 'react';
-import type { Node, Edge } from '@xyflow/react';
+import React, { createContext, useContext, useMemo, useRef, useState, useEffect, useCallback } from 'react';
+import { Node, Edge, Connection, addEdge, useNodesState, useEdgesState, ReactFlowInstance } from '@xyflow/react';
 import { MarkerType } from '@xyflow/react';
 import dagre from 'dagre';
 
-import { useTools } from '@/contexts/ToolsContext';
+import { useTools, type Tool } from '@/contexts/ToolsContext';
 import { supabase } from '@/integrations/supabase/client';
 import { getLayoutEngine } from '@/lib/config';
 
@@ -76,7 +76,7 @@ export const useMapGraph = () => {
   return ctx;
 };
 
-interface Props { children: ReactNode }
+interface Props { children: React.ReactNode }
 
 type LaneSettings = { labels?: Record<string, string>; colors?: Record<string, string> };
 
@@ -87,6 +87,13 @@ const GRAPH_RANK_SEP = 80;
 const LANE_VERTICAL_PADDING = 32;
 const LANE_HORIZONTAL_PADDING = 24;
 const CANVAS_WIDTH = 1800; // wide enough background for most stacks
+
+interface ToolWithMetadata extends Tool {
+  vendor?: string;
+  arch_layer?: string;
+  domain?: string;
+  confidence?: number;
+}
 
 export const MapGraphProvider: React.FC<Props> = ({ children }) => {
   const { tools, addTool } = useTools();
@@ -113,7 +120,7 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
     const buckets: Record<string, typeof tools> = {};
     ALL_LANES.forEach((l) => (buckets[l] = []));
     for (const t of tools) {
-      const lane = (t as any).arch_layer || 'Other';
+      const lane = (t as ToolWithMetadata).arch_layer || 'Other';
       const key = ALL_LANES.includes(lane) ? lane : 'Other';
       buckets[key] = buckets[key] || [];
       buckets[key].push(t);
@@ -123,9 +130,34 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
 
   const toolsChangedKey = useMemo(() =>
     JSON.stringify(
-      tools.map((t) => [t.id, t.name, (t as any).vendor || '', (t as any).arch_layer || '']).sort()
+      tools.map((t) => [t.id, t.name, (t as ToolWithMetadata).vendor || '', (t as ToolWithMetadata).arch_layer || '']).sort()
     )
   , [tools]);
+
+  const toolsForAnalysis = useMemo(() => {
+    return tools.map((t) => {
+      const tool = t as ToolWithMetadata;
+      const lane = tool.arch_layer || 'Other';
+      return { ...tool, category: lane };
+    });
+  }, [tools]);
+
+  const toolsForExport = useMemo(() => {
+    return tools.map((t) => {
+      const tool = t as ToolWithMetadata;
+      return [t.id, t.name, tool.vendor || '', tool.arch_layer || ''];
+    }).sort();
+  }, [tools]);
+
+  const sortedTools = useMemo(() => {
+    return [...tools].sort((a, b) => {
+      const toolA = a as ToolWithMetadata;
+      const toolB = b as ToolWithMetadata;
+      const va = toolA.vendor || inferVendorFromName(a.name) || '';
+      const vb = toolB.vendor || inferVendorFromName(b.name) || '';
+      return va.localeCompare(vb) || a.name.localeCompare(b.name);
+    });
+  }, [tools]);
 
   const layout = useMemo(() => {
     
@@ -141,8 +173,8 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
         return i === -1 ? Number.POSITIVE_INFINITY : i;
       };
       return [...list].sort((a, b) => {
-        const va = (a as any).vendor || inferVendorFromName(a.name) || '';
-        const vb = (b as any).vendor || inferVendorFromName(b.name) || '';
+        const va = (a as ToolWithMetadata).vendor || inferVendorFromName(a.name) || '';
+        const vb = (b as ToolWithMetadata).vendor || inferVendorFromName(b.name) || '';
         const ia = vendorIdx(va);
         const ib = vendorIdx(vb);
         if (ia !== ib) return ia - ib;
@@ -286,7 +318,7 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
                   id: `tool-${t.id}`,
                   type: 'toolNode',
                   position: { x: LANE_HORIZONTAL_PADDING + x, y: currentY + y },
-                  data: { label: t.name, lane: category, vendor: (t as any).vendor, domain: (t as any).domain, archLayer: (t as any).arch_layer || category, confidence: (t as any).confidence, logoUrl, colorHex },
+                  data: { label: t.name, lane: category, vendor: (t as ToolWithMetadata).vendor, domain: (t as ToolWithMetadata).domain, archLayer: (t as ToolWithMetadata).arch_layer || category, confidence: (t as ToolWithMetadata).confidence, logoUrl, colorHex },
                 });
               } else {
                 const x = p.x;
@@ -297,7 +329,7 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
                   id: `tool-${t.id}`,
                   type: 'toolNode',
                   position: { x: LANE_HORIZONTAL_PADDING + x, y: currentY + y - NODE_HEIGHT / 2 },
-                  data: { label: t.name, lane: category, vendor: (t as any).vendor, domain: (t as any).domain, archLayer: (t as any).arch_layer || category, confidence: (t as any).confidence, logoUrl, colorHex },
+                  data: { label: t.name, lane: category, vendor: (t as ToolWithMetadata).vendor, domain: (t as ToolWithMetadata).domain, archLayer: (t as ToolWithMetadata).arch_layer || category, confidence: (t as ToolWithMetadata).confidence, logoUrl, colorHex },
                 });
               }
             });
@@ -316,7 +348,7 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
                   suggestedName: ghost.name,
                   suggestedCategory: ghost.category,
                   onAdd: (name: string, cat?: string) => {
-                    const newId = typeof crypto !== 'undefined' && (crypto as any).randomUUID ? (crypto as any).randomUUID() : Math.random().toString(36).slice(2);
+                    const newId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
                     addTool({ id: newId, name, category: cat || category, description: 'Added via suggestion' });
                   },
                 },
@@ -384,13 +416,13 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
 
       (async () => {
         try {
-          const calls = tools.map((t) => (supabase as any).rpc('get_integrations', { a: t.name }));
+          const calls = tools.map((t) => supabase.rpc('get_integrations', { a: t.name }));
           const results = await Promise.all(calls);
 
           const edgeMap = new Map<string, Edge>();
           laneEdges.forEach((e) => { if (!edgeMap.has(e.id)) edgeMap.set(e.id, e); });
 
-          results.forEach((res: any) => {
+          results.forEach((res: { data: unknown; error: unknown }) => {
             if (res?.error || !res?.data) return;
             (res.data as Array<{ source: string; target: string; relation_type: string }> ).forEach((row) => {
               let srcName = row.source;
@@ -452,3 +484,17 @@ export const MapGraphProvider: React.FC<Props> = ({ children }) => {
 
   return <MapGraphContext.Provider value={value}>{children}</MapGraphContext.Provider>;
 };
+
+// Helper function to infer vendor from tool name
+function inferVendorFromName(name: string): string | null {
+  const lowerName = name.toLowerCase();
+  if (lowerName.includes('google')) return 'Google';
+  if (lowerName.includes('microsoft') || lowerName.includes('office')) return 'Microsoft';
+  if (lowerName.includes('salesforce')) return 'Salesforce';
+  if (lowerName.includes('adobe')) return 'Adobe';
+  if (lowerName.includes('oracle')) return 'Oracle';
+  if (lowerName.includes('sap')) return 'SAP';
+  if (lowerName.includes('ibm')) return 'IBM';
+  if (lowerName.includes('amazon') || lowerName.includes('aws')) return 'Amazon';
+  return null;
+}

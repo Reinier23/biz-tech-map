@@ -1,12 +1,13 @@
 // Lazy-loaded export utilities to keep initial bundle small
 // Note: Uses html-to-image for rasterization and jsPDF for PDFs
 
+import { toPng } from 'html-to-image';
+import html2canvas from 'html2canvas';
 import { logAudit } from './audit';
 
 export async function exportMapPNG(container: HTMLElement, filename = "tech-map.png") {
   try {
-    const html2img = await import('html-to-image');
-    const dataUrl = await html2img.toPng(container, {
+    const dataUrl = await toPng(container, {
       pixelRatio: 2,
       backgroundColor: '#ffffff',
       cacheBust: true,
@@ -24,43 +25,37 @@ export async function exportMapPNG(container: HTMLElement, filename = "tech-map.
 
 export async function exportMapPDF(container: HTMLElement, filename = "tech-map.pdf", companyName = "Your Company") {
   try {
-    const [{ toPng }, jsPDFModule] = await Promise.all([
-      import('html-to-image'),
-      import('jspdf'),
-    ]);
-    const dataUrl = await toPng(container, {
-      pixelRatio: 2,
-      backgroundColor: '#ffffff',
-      cacheBust: true,
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff'
     });
 
-    const { jsPDF } = jsPDFModule as unknown as { jsPDF: any };
+    const imgData = canvas.toDataURL('image/png');
+    const jsPDFModule = await import('jspdf');
+    const { jsPDF } = jsPDFModule as { jsPDF: typeof import('jspdf').jsPDF };
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const imgWidth = 210;
+    const pageHeight = 295;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    let heightLeft = imgHeight;
 
-    // Measure element to decide orientation
-    const rect = container.getBoundingClientRect();
-    const landscape = rect.width >= rect.height;
-    const doc = new jsPDF({ orientation: landscape ? 'landscape' : 'portrait', unit: 'px', format: 'a4' });
+    let position = 0;
 
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
+    doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
 
-    // Header
+    while (heightLeft >= 0) {
+      position = heightLeft - imgHeight;
+      doc.addPage();
+      doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
     const ts = new Date().toLocaleString();
-    doc.setFontSize(12);
     doc.text(`Tech Map — ${companyName} — ${ts}`, 16, 22);
 
-    const topPadding = 32; // leave room for header
-
-    // Scale image to fit page
-    const imgW = rect.width;
-    const imgH = rect.height;
-    const scale = Math.min((pageW - 32) / imgW, (pageH - topPadding - 16) / imgH);
-    const renderW = imgW * scale;
-    const renderH = imgH * scale;
-    const x = (pageW - renderW) / 2;
-    const y = topPadding;
-
-    doc.addImage(dataUrl, 'PNG', x, y, renderW, renderH);
     doc.save(filename);
     try { await logAudit('export_pdf', { filename, companyName, scope: 'map' }); } catch {}
   } catch (err) {
@@ -71,39 +66,37 @@ export async function exportMapPDF(container: HTMLElement, filename = "tech-map.
 
 export async function exportConsolidationPDF(container: HTMLElement, filename = "consolidation-report.pdf", companyName = "Your Company") {
   try {
-    const [{ toPng }, jsPDFModule] = await Promise.all([
-      import('html-to-image'),
-      import('jspdf'),
-    ]);
-
-    const dataUrl = await toPng(container, {
-      pixelRatio: 2,
-      backgroundColor: '#ffffff',
-      cacheBust: true,
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff'
     });
 
-    const { jsPDF } = jsPDFModule as unknown as { jsPDF: any };
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'px', format: 'a4' });
+    const imgData = canvas.toDataURL('image/png');
+    const jsPDFModule = await import('jspdf');
+    const { jsPDF } = jsPDFModule as { jsPDF: typeof import('jspdf').jsPDF };
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const imgWidth = 210;
+    const pageHeight = 295;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    let heightLeft = imgHeight;
 
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
+    let position = 0;
+
+    doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    while (heightLeft >= 0) {
+      position = heightLeft - imgHeight;
+      doc.addPage();
+      doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
 
     const ts = new Date().toLocaleString();
-    doc.setFontSize(12);
     doc.text(`Consolidation Report — ${companyName} — ${ts}`, 16, 22);
 
-    const rect = container.getBoundingClientRect();
-    const imgW = rect.width;
-    const imgH = rect.height;
-
-    const topPadding = 32;
-    const scale = Math.min((pageW - 32) / imgW, (pageH - topPadding - 16) / imgH);
-    const renderW = imgW * scale;
-    const renderH = imgH * scale;
-    const x = (pageW - renderW) / 2;
-    const y = topPadding;
-
-    doc.addImage(dataUrl, 'PNG', x, y, renderW, renderH);
     doc.save(filename);
     try { await logAudit('export_pdf', { filename, companyName, scope: 'consolidation' }); } catch {}
   } catch (err) {

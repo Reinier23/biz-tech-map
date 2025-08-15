@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Play, Trash2, CheckCircle } from 'lucide-react';
-import { analyzeStack } from '@/lib/ruleEngine';
+import { analyzeStack, type AnalyzedItem } from '@/lib/ruleEngine';
 import { resolveCostsBatch } from '@/hooks/useToolCosts';
 import { DEBUG } from '@/lib/config';
 
@@ -35,7 +35,7 @@ const sampleTools = [
 export default function QA() {
   const navigate = useNavigate();
   const { tools, setTools } = useTools();
-  const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalyzedItem[] | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const seedSampleStack = () => {
@@ -74,7 +74,7 @@ export default function QA() {
   const getActionCounts = () => {
     if (!analysisResult) return { replace: 0, evaluate: 0, keep: 0 };
     
-    return analysisResult.reduce((acc: any, item: any) => {
+    return analysisResult.reduce((acc: { replace: number; evaluate: number; keep: number }, item: AnalyzedItem) => {
       const action = item.action?.toLowerCase() || 'keep';
       acc[action] = (acc[action] || 0) + 1;
       return acc;
@@ -162,9 +162,9 @@ export default function QA() {
                     <h4 className="font-medium">Top Recommendations:</h4>
                     <div className="space-y-1 text-sm">
                       {analysisResult
-                        .filter((item: any) => item.action !== 'Keep')
+                        .filter((item: AnalyzedItem) => item.action !== 'Keep')
                         .slice(0, 3)
-                        .map((item: any, idx: number) => (
+                        .map((item: AnalyzedItem, idx: number) => (
                           <div key={idx} className="flex justify-between">
                             <span>{item.name}</span>
                             <Badge variant={item.action === 'Replace' ? 'destructive' : 'secondary'} className="text-xs">

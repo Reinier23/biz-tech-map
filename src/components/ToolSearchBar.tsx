@@ -1,16 +1,17 @@
-import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { Input } from '@/components/ui/input';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { Search, X, Loader2, Plus, Sparkles, Building, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-
-import { Search, Plus, Sparkles, Building, Lightbulb } from 'lucide-react';
-import { getToolSuggestions, ToolSuggestion } from '@/lib/toolSuggestions';
-import { getCategoryConfig } from '@/lib/categories';
-import { supabase } from '@/integrations/supabase/client';
-import { ToolSuggestionDialog } from '@/components/ToolSuggestionDialog';
+import { Skeleton } from '@/components/ui/skeleton';
+import { getToolSuggestions, type ToolSuggestion } from '@/lib/toolSuggestions';
 import { brandfetchLogo } from '@/lib/utils';
 import { DEBUG } from '@/lib/config';
+import { useTools } from '@/contexts/ToolsContext';
+import { supabase } from '@/integrations/supabase/client';
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
+import { getCategoryConfig } from '@/lib/categories';
+import { ToolSuggestionDialog } from '@/components/ToolSuggestionDialog';
 
 // SaaS category allowlist (must match server-side filter)
 const ALLOWED_CATEGORIES = new Set([
@@ -19,7 +20,13 @@ const ALLOWED_CATEGORIES = new Set([
 ]);
 
 // Types for Supabase RPC response
-type SearchToolsRow = { name: string; domain: string | null; category: string | null; description: string | null; logo_url: string | null };
+interface SearchToolsRow {
+  name: string;
+  category: string;
+  description: string;
+  domain?: string;
+  logo_url?: string;
+}
 
 // Brandfetch logo helper imported from utils
 type UISuggestion = ToolSuggestion & { domain?: string };
@@ -53,14 +60,14 @@ useEffect(() => {
 // Listen for prefill events from elsewhere (e.g., GhostNode)
 useEffect(() => {
   const handler = (e: Event) => {
-    const anyEvt = e as CustomEvent<string>;
-    const q = anyEvt.detail || '';
+    const customEvent = e as CustomEvent<string>;
+    const q = customEvent.detail || '';
     setQuery(q);
     setShowSuggestions(true);
     setTimeout(() => inputRef.current?.focus(), 0);
   };
-  window.addEventListener('toolsearch:prefill' as any, handler as any);
-  return () => window.removeEventListener('toolsearch:prefill' as any, handler as any);
+  window.addEventListener('toolsearch:prefill', handler);
+  return () => window.removeEventListener('toolsearch:prefill', handler);
 }, []);
 
 
@@ -71,7 +78,7 @@ useEffect(() => {
       setIsLoading(true);
 
       const trimmed = (searchQuery || '').trim();
-      console.log('[TSB] query=', searchQuery);
+      if (DEBUG) console.log('[TSB] query=', searchQuery);
       let qArg = trimmed;
       if (trimmed.length === 0) {
         qArg = '';
@@ -88,36 +95,33 @@ useEffect(() => {
         return;
       }
 
-      const { data, error } = await (supabase as any).rpc('search_tools', { q: qArg, lim: 10 });
+      const { data, error } = await supabase.rpc('search_tools', { q: qArg, lim: 10 });
 
       if (error) throw error;
 
       const rows = (data || []) as SearchToolsRow[];
-      const apiSuggestions: UISuggestion[] = Array.isArray(rows)
+      const apiSuggestions: ToolSuggestion[] = Array.isArray(rows)
         ? rows.map((row) => ({
             id: row.domain ?? row.name?.toLowerCase().replace(/\s+/g, '-'),
             name: row.name,
             category: (row.category || 'Other'),
             description: row.description ?? '',
-            domain: row.domain ?? undefined,
             logoUrl: (row.logo_url ?? (row.domain ? brandfetchLogo(row.domain) : undefined)) || undefined,
           }))
         : [];
-      console.log('[TSB] RPC rows:', rows);
-      console.log('[TSB] mapped suggestions:', apiSuggestions);
       if (DEBUG) {
         console.debug('[ToolSearchBar] RPC rows:', rows);
         console.debug('[ToolSearchBar] Mapped suggestions:', apiSuggestions);
       }
       const filteredSuggestions = apiSuggestions
-        .filter((s: UISuggestion) => ALLOWED_CATEGORIES.has(s.category))
-        .filter((suggestion: UISuggestion) =>
+        .filter((s: ToolSuggestion) => ALLOWED_CATEGORIES.has(s.category))
+        .filter((suggestion: ToolSuggestion) =>
           !existingTools.some(tool => tool.name.toLowerCase() === suggestion.name.toLowerCase())
         );
       setSuggestions(filteredSuggestions);
     } catch (error) {
       console.warn('RPC search failed, using local fallback:', error);
-      const newSuggestions = getToolSuggestions(searchQuery, 8) as UISuggestion[];
+      const newSuggestions = getToolSuggestions(searchQuery, 8) as ToolSuggestion[];
       const filteredSuggestions = newSuggestions
         .filter(s => ALLOWED_CATEGORIES.has(s.category))
         .filter(suggestion =>
@@ -222,10 +226,9 @@ useEffect(() => {
       }
       acc[suggestion.category].push(suggestion);
       return acc;
-    }, {} as Record<string, UISuggestion[]>);
+    }, {} as Record<string, ToolSuggestion[]>);
   }, [suggestions]);
 
-  console.log('[TSB] rendering suggestions:', suggestions);
   return (
     <div ref={containerRef} className="relative w-full max-w-2xl mx-auto">
       <div className="relative">
@@ -305,9 +308,9 @@ useEffect(() => {
                             >
                               <div className="flex items-center justify-between w-full">
                                 <div className="flex items-center space-x-3">
-                                  {(suggestion.domain || suggestion.logoUrl) ? (
+                                  {(suggestion.logoUrl) ? (
                                     <img
-                                      src={suggestion.domain ? brandfetchLogo(suggestion.domain) : suggestion.logoUrl!}
+                                      src={suggestion.logoUrl}
                                       alt={suggestion.name}
                                       className="w-6 h-6 rounded-full"
                                       loading="lazy"
@@ -327,7 +330,7 @@ useEffect(() => {
                                       {highlightMatch(suggestion.name, query)}
                                     </div>
                                     <div className="text-xs text-muted-foreground line-clamp-1">
-                                      {suggestion.domain || suggestion.description}
+                                      {suggestion.description}
                                     </div>
                                   </div>
                                 </div>

@@ -22,7 +22,9 @@ export const ToolNode: React.FC<NodeProps> = ({ data }) => {
   return (
     <div
       className="tool-card flex items-center gap-3 px-3 py-2 rounded-lg border bg-card shadow-sm w-[200px] h-[72px]"
-      style={{ ['--lane-color' as any]: colorHex } as React.CSSProperties}
+      style={{ 
+        '--lane-color': colorHex 
+      } as React.CSSProperties}
     >
       {logoUrl ? (
         <img

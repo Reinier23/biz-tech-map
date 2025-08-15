@@ -1,35 +1,43 @@
-import { supabase } from "@/integrations/supabase/client";
-import { logAudit } from "./audit";
+import { supabase } from '@/integrations/supabase/client';
+import type { Tool } from '@/contexts/ToolsContext';
+import type { AnalyzedItem } from '@/lib/ruleEngine';
 
-export async function createShare(payload: any): Promise<{ id: string }> {
-  const { data, error } = await supabase
-    .from('shares')
-    .insert({ payload, is_public: true })
-    .select('id')
-    .single();
+interface SharePayload {
+  tools: Tool[];
+  latestAnalysis: AnalyzedItem[];
+  techMapMeta?: {
+    timestamp: number;
+  };
+}
 
-  if (error) {
+export async function createShare(payload: SharePayload): Promise<{ id: string }> {
+  try {
+    const { data, error } = await supabase.from('shares').insert({
+      payload,
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+    }).select('id').single();
+
+    if (error) throw error;
+    return { id: data.id };
+  } catch (error) {
     console.error('createShare error', error);
     throw error;
   }
-
-  // Fire-and-forget audit log
-  void logAudit('share_created', { shareId: data.id }).catch(() => {});
-  return { id: data.id };
 }
 
-export async function fetchShare(id: string): Promise<any | null> {
-  const { data, error } = await supabase
-    .from('shares')
-    .select('payload')
-    .eq('id', id)
-    .eq('is_public', true)
-    .maybeSingle();
+export async function fetchShare(id: string): Promise<SharePayload | null> {
+  try {
+    const { data, error } = await supabase
+      .from('shares')
+      .select('payload')
+      .eq('id', id)
+      .gte('expires_at', new Date().toISOString())
+      .single();
 
-  if (error) {
+    if (error) throw error;
+    return data?.payload || null;
+  } catch (error) {
     console.error('fetchShare error', error);
-    throw error;
+    return null;
   }
-
-  return data?.payload ?? null;
 }
