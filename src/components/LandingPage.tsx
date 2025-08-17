@@ -9,13 +9,14 @@ import { useToast } from "@/hooks/use-toast";
 import heroImage from "@/assets/tech-stack-consolidation-hero.jpg";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const LandingPage = () => {
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -201,7 +202,7 @@ const LandingPage = () => {
                 size="xl" 
                 variant="premium" 
                 className="group"
-                onClick={() => window.location.href = '/add-tools'}
+                onClick={() => navigate('/add-tools')}
               >
                 <span className="flex items-center">
                   Get Started Free
@@ -211,7 +212,7 @@ const LandingPage = () => {
               <Button 
                 size="xl" 
                 variant="outline" 
-                onClick={() => window.location.href = '/mapper'}
+                onClick={() => navigate('/mapper')}
               >
                 <span>View Demo</span>
               </Button>

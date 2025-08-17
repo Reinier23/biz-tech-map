@@ -6,6 +6,7 @@ import { useMapGraph, CATEGORY_LANES, LANE_COLORS } from '@/contexts/MapGraphCon
 import { getSuggestions, Suggestion } from '@/lib/mapRules';
 import { toast } from 'sonner';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const srOnly = 'sr-only';
 
@@ -16,6 +17,7 @@ export const AssistantPanel: React.FC = () => {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [liveMsg, setLiveMsg] = useState<string>('');
   const lastAddedRef = useRef<{ id: string; name: string } | null>(null);
+  const navigate = useNavigate();
 
   const suggestions: Suggestion[] = useMemo(() => {
     const all = getSuggestions(tools);
@@ -120,7 +122,7 @@ export const AssistantPanel: React.FC = () => {
                     <Button 
                       className="mt-2" 
                       aria-label="Run consolidation analysis"
-                      onClick={() => window.location.href = '/consolidation'}
+                      onClick={() => navigate('/consolidation')}
                     >
                       <span>Run Consolidation Analysis</span>
                     </Button>
